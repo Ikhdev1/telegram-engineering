@@ -130,7 +130,7 @@ python scripts/verify_archives.py dist
 
 The `.skill` archive includes instructions, references, tools, gallery and the runnable example. The source ZIP also includes tests, evals and CI. Local project state, `.env`, databases, sessions, caches, `.git` and previous distributions are excluded. Builds are deterministic for unchanged input files and print SHA256; nothing is uploaded.
 
-Before public release, choose a license and confirm rights to all included material. No MIT/Apache redistribution grant is claimed until a license is selected. Never commit credentials or working databases.
+**Licensing:** a license has not been selected. Public access does not imply an MIT/Apache redistribution grant; confirm the owner's permission before redistribution. Never commit credentials or working databases.
 
 ## Scope and evidence
 

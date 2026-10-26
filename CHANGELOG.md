@@ -16,7 +16,7 @@
 - Short core skill routes to resources on demand; existing project stacks remain supported.
 - Russian and English usage documentation, local checker, deterministic skill/source archives, runtime-state exclusions and bounded credential guards.
 - Behavior tests, executable AI application evaluations, near-miss trigger queries and Windows/Linux CI configuration.
-- Repository publication, hosted CI, license selection and real Telegram delivery/rendering remain separate explicit steps; this release performs no upload.
+- Published the public repository with bilingual quick starts, an honestly labeled gallery preview, contribution/security guidance and live CI status. The initial GitHub Actions matrix passed on Windows/Linux and Python 3.12/3.13. License selection and real Telegram delivery/rendering remain separate explicit steps.
 
 ## 1.0.0 — 2026-10-26
 
