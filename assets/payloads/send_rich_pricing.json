@@ -1,0 +1,9 @@
+{
+  "method": "sendRichMessage",
+  "payload": {
+    "chat_id": -1001234567890,
+    "rich_message": {
+      "html": "<h2>Тарифы</h2><p>Выберите подходящий вариант.</p><table bordered striped compact><caption>Стоимость за месяц</caption><tr><th>План</th><th>Цена</th></tr><tr><td>Базовый</td><td>500 ₽</td></tr><tr><td>Команда</td><td>1500 ₽</td></tr></table><details><summary>Условия</summary><p>Расчёт за месяц. Перед оплатой покажем итог.</p></details><tg-button-row align=\"center\"><tg-button type=\"callback_data\" style=\"primary\" data=\"plan:choose\">Выбрать тариф</tg-button></tg-button-row>"
+    }
+  }
+}

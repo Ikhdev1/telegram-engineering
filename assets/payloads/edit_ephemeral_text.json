@@ -1,0 +1,20 @@
+{
+  "method": "editEphemeralMessageText",
+  "payload": {
+    "chat_id": -1001234567890,
+    "receiver_user_id": 123456789,
+    "ephemeral_message_id": 987654321,
+    "text": "<b>Только для вас</b>\nЗаявка №42 подтверждена.",
+    "parse_mode": "HTML",
+    "reply_markup": {
+      "inline_keyboard": [
+        [
+          {
+            "text": "Мои заявки",
+            "callback_data": "mine:requests"
+          }
+        ]
+      ]
+    }
+  }
+}

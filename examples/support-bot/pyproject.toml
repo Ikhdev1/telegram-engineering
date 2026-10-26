@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "support-bot-example"
+version = "1.0.0"
+description = "Runnable aiogram 3 + SQLite support-bot reference example"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiogram==3.31.0",
+]
+
+[project.scripts]
+support-bot = "support_bot.cli:main"
+
+[tool.setuptools]
+packages = ["support_bot"]

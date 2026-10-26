@@ -1,0 +1,9 @@
+{
+  "method": "answerCallbackQuery",
+  "payload": {
+    "callback_query_id": "cbq_7f3d9a2e",
+    "text": "Заявка подтверждена",
+    "show_alert": false,
+    "cache_time": 0
+  }
+}

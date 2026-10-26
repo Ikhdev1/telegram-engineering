@@ -1,0 +1,10 @@
+{
+  "method": "sendRichMessage",
+  "payload": {
+    "chat_id": -1001234567890,
+    "rich_message": {
+      "is_rtl": false,
+      "html": "<h1>Как проходит заявка</h1><p>Сначала проверяем данные, затем подтверждаем слот и отправляем напоминание. <a href=\"#chapter-1\">Условия переноса</a> описаны ниже.</p><figure><img src=\"https://example.com/cover.jpg\" alt=\"Схема заявки\"/><figcaption>Схема обработки<cite>Команда поддержки</cite></figcaption></figure><blockquote>Если клиент не подтвердил слот за два часа, заявка возвращается в очередь.<cite>Регламент</cite></blockquote><h2><a name=\"chapter-1\"></a>Условия переноса</h2><ul><li><input type=\"checkbox\" checked>Клиент получает новое время</li><li><input type=\"checkbox\">Оператор фиксирует причину</li></ul><ul><li>Перенос не чаще двух раз</li><li>После третьего переноса нужен звонок</li></ul><details><summary>Что видит оператор</summary><p>Статус, историю и кнопку связи с клиентом.</p></details><tg-button-row><tg-button type=\"url\" url=\"https://example.com/help\">Открыть инструкцию</tg-button><tg-button type=\"callback_data\" style=\"link\" data=\"help:faq\">Показать FAQ</tg-button></tg-button-row>"
+    }
+  }
+}

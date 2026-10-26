@@ -1,0 +1,5034 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Интерфейсная галерея — Telegram engineering</title>
+<meta name="description" content="Офлайн-галерея интерактивных макетов Telegram-интерфейсов: меню, формы, роли, состояния и rich-посты. Не клиент Telegram.">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('te-gallery-theme');
+      if (saved === 'light' || saved === 'dark') {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (error) { /* localStorage can be unavailable; light theme remains. */ }
+  })();
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #f2f1ec;
+    --paper-2: #e8e7e0;
+    --surface: #fbfaf6;
+    --surface-2: #f3f2ec;
+    --ink: #151a20;
+    --muted: #59636f;
+    --faint: #6b7480;
+    --line: #d6d5cd;
+    --line-strong: #b9b9b0;
+    --accent: #1f6fb2;
+    --accent-strong: #155487;
+    --accent-soft: #e2edf6;
+    --on-accent: #ffffff;
+    --danger: #9e3a30;
+    --danger-soft: #f6e5e1;
+    --on-danger: #ffffff;
+    --warn: #80540f;
+    --warn-soft: #f3ead7;
+    --ok: #2c6b4d;
+    --ok-soft: #e2efe7;
+    --device: #0b1117;
+    --device-line: #2c3a46;
+    --device-ink: #8f9daa;
+    --chat-bg: #edf1f4;
+    --chat-pattern: rgba(54, 85, 110, 0.11);
+    --bot-bubble: #ffffff;
+    --bubble-ink: #15202a;
+    --bubble-line: #e1e4e6;
+    --bubble-meta: #6d7781;
+    --code-bg: #10171e;
+    --code-ink: #d9e5f0;
+    --focus: #0f8bd7;
+    --shadow: 0 34px 80px -36px rgba(15, 25, 35, 0.55);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "Cascadia Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+    --page: 1440px;
+  }
+
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #0b1015;
+    --paper-2: #10171e;
+    --surface: #111920;
+    --surface-2: #16202a;
+    --ink: #e8eef4;
+    --muted: #a1aeba;
+    --faint: #8d9aa6;
+    --line: #26323d;
+    --line-strong: #3b4854;
+    --accent: #5fb3ef;
+    --accent-strong: #8dcbf5;
+    --accent-soft: #142b3d;
+    --on-accent: #08131b;
+    --danger: #f09588;
+    --danger-soft: #331d1a;
+    --on-danger: #1b0b09;
+    --warn: #e0b266;
+    --warn-soft: #2d2517;
+    --ok: #80cba8;
+    --ok-soft: #13291f;
+    --device: #05090d;
+    --device-line: #283641;
+    --device-ink: #8795a3;
+    --chat-bg: #0e161d;
+    --chat-pattern: rgba(139, 179, 207, 0.08);
+    --bot-bubble: #18232d;
+    --bubble-ink: #e5edf4;
+    --bubble-line: #293641;
+    --bubble-meta: #91a0ad;
+    --code-bg: #070c11;
+    --code-ink: #cedae6;
+    --focus: #7cc7ff;
+    --shadow: 0 38px 90px -34px rgba(0, 0, 0, 0.85);
+  }
+
+  *,
+  *::before,
+  *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1000px 480px at 82% -8%, var(--paper-2), transparent 72%),
+      var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15.5px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, transparent 0, transparent calc(50% - 0.5px), color-mix(in srgb, var(--line) 45%, transparent) calc(50% - 0.5px), transparent calc(50% + 0.5px), transparent 100%);
+    opacity: 0.28;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  a { color: var(--accent); text-underline-offset: 0.18em; }
+
+  button,
+  input,
+  select,
+  textarea { font: inherit; }
+
+  button { color: inherit; }
+
+  button:not(:disabled),
+  label,
+  summary { -webkit-tap-highlight-color: transparent; }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  .skip-link {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+    padding: 9px 13px;
+    border: 1px solid var(--ink);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 13px;
+    transform: translateY(-170%);
+    transition: transform 0.15s ease;
+  }
+
+  .skip-link:focus { transform: translateY(0); }
+
+  .page-shell {
+    width: 100%;
+    max-width: var(--page);
+    margin: 0 auto;
+    padding: 0 clamp(14px, 3vw, 40px);
+  }
+
+  .eyebrow {
+    display: block;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .mono { font-family: var(--mono); }
+
+  .masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    min-height: 66px;
+    border-top: 3px solid var(--ink);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+  }
+
+  .brand-mark {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: -0.04em;
+  }
+
+  .brand-copy {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    min-width: 0;
+  }
+
+  .brand-title {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: 0.015em;
+  }
+
+  .brand-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .masthead-tools {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .tool-button {
+    min-height: 32px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    padding: 6px 9px;
+    cursor: pointer;
+  }
+
+  .tool-button:hover {
+    border-color: var(--line-strong);
+    color: var(--ink);
+  }
+
+  .tool-button:focus-visible { outline-offset: 2px; }
+
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(250px, 0.62fr);
+    gap: clamp(26px, 5vw, 68px);
+    align-items: end;
+    padding: clamp(36px, 6vw, 72px) 0 clamp(26px, 4vw, 40px);
+  }
+
+  .hero h1 {
+    max-width: 15ch;
+    margin: 12px 0 19px;
+    font-family: var(--serif);
+    font-size: clamp(38px, 5.2vw, 66px);
+    font-weight: 400;
+    letter-spacing: -0.045em;
+    line-height: 0.98;
+    text-wrap: balance;
+  }
+
+  .hero h1 .accent {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .hero-lead {
+    max-width: 64ch;
+    margin: 0;
+    color: var(--muted);
+    font-size: clamp(15px, 1.35vw, 18px);
+    line-height: 1.58;
+    text-wrap: pretty;
+  }
+
+  .hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 14px;
+    margin-top: 22px;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+  }
+
+  .hero-meta span::before {
+    content: "—";
+    margin-right: 7px;
+    color: var(--line-strong);
+  }
+
+  .reading-key {
+    border-top: 1px solid var(--ink);
+    padding-top: 12px;
+  }
+
+  .reading-key .eyebrow { margin-bottom: 10px; }
+
+  .reading-key ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: key;
+  }
+
+  .reading-key li {
+    display: grid;
+    grid-template-columns: 22px 1fr;
+    gap: 8px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+    counter-increment: key;
+    font-size: 12.5px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .reading-key li::before {
+    content: "0" counter(key);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.03em;
+    color: var(--accent);
+    padding-top: 2px;
+  }
+
+  .reading-key strong { color: var(--ink); font-weight: 600; }
+
+  .disclaimer {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: start;
+    margin: 0 0 clamp(26px, 4vw, 42px);
+    padding: 15px 17px;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 2px;
+  }
+
+  html[data-theme="dark"] .disclaimer {
+    background: var(--surface-2);
+    color: var(--ink);
+    border: 1px solid var(--line-strong);
+  }
+
+  .disclaimer-mark {
+    display: grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    border: 1px solid currentColor;
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .disclaimer strong {
+    display: block;
+    margin: 1px 0 3px;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: 0.005em;
+  }
+
+  .disclaimer p {
+    max-width: 100ch;
+    margin: 0;
+    color: inherit;
+    opacity: 0.78;
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .offline-badge {
+    align-self: start;
+    border: 1px solid currentColor;
+    padding: 4px 7px;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    opacity: 0.78;
+    white-space: nowrap;
+  }
+
+  .handbook {
+    display: grid;
+    grid-template-columns: 198px minmax(0, 1fr) 332px;
+    gap: clamp(20px, 3vw, 38px);
+    align-items: start;
+    padding-bottom: clamp(42px, 6vw, 74px);
+  }
+
+  .pattern-nav {
+    position: sticky;
+    top: 18px;
+    min-width: 0;
+  }
+
+  .nav-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .nav-count {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--faint);
+  }
+
+  .nav-group { margin-top: 16px; }
+
+  .nav-label {
+    margin: 0 0 5px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-list li { margin: 0; }
+
+  .nav-list a {
+    display: grid;
+    grid-template-columns: 25px minmax(0, 1fr);
+    gap: 2px;
+    align-items: baseline;
+    margin: 0 0 1px;
+    padding: 7px 7px 7px 6px;
+    border-left: 2px solid transparent;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.35;
+    text-decoration: none;
+  }
+
+  .nav-list a:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
+  .nav-list a[aria-current="page"] {
+    border-left-color: var(--accent);
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .nav-num {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--faint);
+  }
+
+  .nav-list a[aria-current="page"] .nav-num { color: var(--accent); }
+
+  .nav-note {
+    margin-top: 18px;
+    padding-top: 11px;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 9px;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
+
+  .stage {
+    min-width: 0;
+  }
+
+  .stage-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 0 0 11px;
+  }
+
+  .stage-head .eyebrow { color: var(--accent); }
+
+  .stage-head h2 {
+    margin: 4px 0 4px;
+    font-family: var(--serif);
+    font-size: clamp(24px, 2.5vw, 31px);
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+
+  .stage-head p {
+    max-width: 58ch;
+    margin: 0;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .stage-count {
+    flex: none;
+    padding-top: 4px;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+  }
+
+  .stage-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px 18px;
+    padding: 10px 0 12px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .role-picker {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .role-picker legend {
+    margin: 0 0 5px;
+    padding: 0;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .segmented {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    width: max-content;
+    max-width: 100%;
+    padding: 2px;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--surface-2);
+  }
+
+  .segmented label {
+    position: relative;
+    display: block;
+    cursor: pointer;
+  }
+
+  .segmented input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .segmented span {
+    display: block;
+    padding: 6px 8px;
+    border-radius: 1px;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .segmented label:hover span { color: var(--ink); }
+
+  .segmented input:checked + span {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .segmented input:focus-visible + span {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .width-picker {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-bottom: 1px;
+  }
+
+  .width-picker > span {
+    margin-right: 2px;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+
+  .width-picker button {
+    min-height: 26px;
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 9.5px;
+    cursor: pointer;
+  }
+
+  .width-picker button[aria-pressed="true"] {
+    border-color: var(--ink);
+    color: var(--ink);
+    background: var(--surface);
+  }
+
+  .role-note {
+    margin: 7px 0 0;
+    color: var(--faint);
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+
+  .role-note strong { color: var(--muted); font-weight: 550; }
+
+  .device {
+    width: min(396px, 100%);
+    margin: 17px auto 0;
+    padding: 9px;
+    border: 1px solid var(--device-line);
+    border-radius: 27px;
+    background: var(--device);
+    box-shadow: var(--shadow);
+    transition: width 0.18s ease;
+  }
+
+  .device[data-width="narrow"] { width: min(360px, 100%); }
+
+  .device-chrome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 2px 8px 8px;
+    color: var(--device-ink);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .chat {
+    display: flex;
+    flex-direction: column;
+    height: clamp(560px, 70vh, 686px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.045);
+    border-radius: 19px;
+    background: var(--chat-bg);
+    color: var(--bubble-ink);
+  }
+
+  .chat-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: none;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .chat-back {
+    margin-right: -3px;
+    color: var(--faint);
+    font-size: 21px;
+    line-height: 1;
+  }
+
+  .chat-avatar {
+    display: grid;
+    place-items: center;
+    width: 31px;
+    height: 31px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .chat-id {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.28;
+  }
+
+  .chat-name {
+    overflow: hidden;
+    font-size: 12.5px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chat-kind {
+    overflow: hidden;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: 0.025em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .demo-pill {
+    flex: none;
+    margin-left: auto;
+    padding: 3px 5px;
+    border: 1px solid var(--line);
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .chat-stream {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+    padding: 13px 12px 16px;
+    background-color: var(--chat-bg);
+    background-image: radial-gradient(var(--chat-pattern) 0.65px, transparent 0.65px);
+    background-size: 13px 13px;
+    animation: stream-in 0.18s ease-out;
+  }
+
+  .chat-stream::-webkit-scrollbar { width: 7px; }
+  .chat-stream::-webkit-scrollbar-thumb {
+    border: 2px solid var(--chat-bg);
+    border-radius: 8px;
+    background: var(--line-strong);
+  }
+
+  @keyframes stream-in {
+    from { opacity: 0.55; transform: translateY(3px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .msg {
+    max-width: 96%;
+    margin: 0 0 12px;
+    font-size: 12.5px;
+    line-height: 1.48;
+  }
+
+  .msg:last-child { margin-bottom: 0; }
+
+  .msg-meta {
+    margin: 0 0 4px 4px;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+  }
+
+  .bubble {
+    padding: 11px 12px;
+    border: 1px solid var(--bubble-line);
+    border-radius: 13px 13px 13px 4px;
+    background: var(--bot-bubble);
+    color: var(--bubble-ink);
+    box-shadow: 0 7px 18px -16px rgba(10, 20, 30, 0.6);
+    overflow-wrap: anywhere;
+  }
+
+  .bubble p { margin: 0 0 8px; }
+  .bubble p:last-child { margin-bottom: 0; }
+
+  .bubble h3,
+  .bubble-title {
+    margin: 0 0 5px;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+
+  .bubble .muted {
+    color: var(--bubble-meta);
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+
+  .scope-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 3px 6px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: 0.015em;
+    line-height: 1.3;
+    vertical-align: middle;
+  }
+
+  .inline-keyboard {
+    display: grid;
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .kb-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .kb {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    min-height: 31px;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--accent);
+    font-size: 11.5px;
+    font-weight: 550;
+    line-height: 1.25;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .kb:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .kb-primary {
+    border-color: var(--accent);
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  .kb-primary:hover:not(:disabled) {
+    border-color: var(--accent-strong);
+    background: var(--accent-strong);
+    color: var(--on-accent);
+  }
+
+  .kb-danger {
+    border-color: var(--danger);
+    background: transparent;
+    color: var(--danger);
+  }
+
+  .kb-danger:hover:not(:disabled) {
+    background: var(--danger-soft);
+  }
+
+  .kb-danger-solid {
+    border-color: var(--danger);
+    background: var(--danger);
+    color: var(--on-danger);
+  }
+
+  .kb-danger-solid:hover:not(:disabled) {
+    background: var(--danger);
+    filter: saturate(1.08);
+  }
+
+  .kb:disabled,
+  .chip:disabled,
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  .kb:disabled {
+    border-style: dashed;
+    background: transparent;
+    color: var(--bubble-meta);
+    opacity: 0.78;
+  }
+
+  .action-reason {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    margin: 4px 1px 0;
+    color: var(--bubble-meta);
+    font-size: 9.5px;
+    line-height: 1.4;
+  }
+
+  .lockmark {
+    position: relative;
+    display: inline-block;
+    width: 8px;
+    height: 7px;
+    flex: none;
+    margin-top: 3px;
+    border: 1px solid currentColor;
+    border-radius: 1px;
+  }
+
+  .lockmark::before {
+    content: "";
+    position: absolute;
+    left: 1px;
+    top: -4px;
+    width: 4px;
+    height: 4px;
+    border: 1px solid currentColor;
+    border-bottom: 0;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .scene-notice {
+    display: flex;
+    gap: 7px;
+    margin: 0 0 11px;
+    padding: 7px 9px;
+    border-left: 2px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--bubble-ink);
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+
+  .scene-notice::before {
+    content: "i";
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--accent);
+    padding-top: 1px;
+  }
+
+  .chat-caption {
+    margin: 9px 2px 0;
+    color: var(--bubble-meta);
+    font-size: 9px;
+    line-height: 1.45;
+  }
+
+  .surface {
+    padding: 13px;
+    border: 1px solid var(--bubble-line);
+    border-radius: 8px;
+    background: var(--bot-bubble);
+    color: var(--bubble-ink);
+    box-shadow: 0 10px 28px -24px rgba(10, 20, 30, 0.55);
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 9px;
+    margin-bottom: 9px;
+  }
+
+  .panel-head h3 {
+    margin: 2px 0 0;
+    font-family: var(--serif);
+    font-size: 20px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .panel-head .eyebrow {
+    color: var(--bubble-meta);
+    font-size: 8px;
+  }
+
+  .surface .scope-chip {
+    flex: none;
+    max-width: 48%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stepper {
+    display: flex;
+    gap: 3px;
+    margin: 0 0 10px;
+  }
+
+  .stepper span {
+    height: 2px;
+    flex: 1;
+    background: var(--bubble-line);
+  }
+
+  .stepper span.on { background: var(--accent); }
+
+  .step-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 5px;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .selection {
+    display: inline-block;
+    margin: 2px 0 6px;
+    padding: 3px 6px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: 9.5px;
+  }
+
+  .mock-composer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 6px 6px 10px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .mock-composer input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: 11.5px;
+    line-height: 1.4;
+  }
+
+  .mock-composer input::placeholder { color: var(--faint); }
+
+  .send-button {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex: none;
+    border: 0;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--on-accent);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .composer-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 4px 2px 0;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 1.4;
+  }
+
+  .field-error {
+    margin: 7px 0 0;
+    padding: 6px 8px;
+    border-left: 2px solid var(--danger);
+    background: var(--danger-soft);
+    color: var(--danger);
+    font-size: 10.5px;
+    line-height: 1.4;
+  }
+
+  .summary-grid {
+    display: grid;
+    gap: 7px;
+    margin: 9px 0 0;
+    padding: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+
+  .summary-grid div {
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr);
+    gap: 7px;
+    align-items: start;
+  }
+
+  .summary-grid dt {
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .summary-grid dd {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .result-card {
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+    border: 1px solid var(--ok);
+    background: var(--ok-soft);
+    color: var(--bubble-ink);
+  }
+
+  .result-mark {
+    display: grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    border: 1px solid var(--ok);
+    border-radius: 50%;
+    color: var(--ok);
+    font-size: 13px;
+  }
+
+  .result-card h3 {
+    margin: 1px 0 0;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+  }
+
+  .result-card p { margin: 0; color: var(--bubble-ink); opacity: 0.82; font-size: 10.5px; }
+
+  .filter-row,
+  .state-tabs,
+  .scope-switch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0 0 10px;
+  }
+
+  .chip {
+    min-height: 25px;
+    padding: 4px 7px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: transparent;
+    color: var(--bubble-meta);
+    font-size: 10px;
+    line-height: 1.25;
+    cursor: pointer;
+  }
+
+  .chip:hover:not(:disabled) { border-color: var(--line-strong); color: var(--ink); }
+
+  .chip[aria-pressed="true"] {
+    border-color: var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .chip:disabled { opacity: 0.48; }
+
+  .request-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 5px;
+  }
+
+  .request-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto 11px;
+    gap: 7px;
+    align-items: center;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .request-card:hover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .req-main { min-width: 0; display: grid; gap: 2px; }
+
+  .req-title {
+    overflow: hidden;
+    font-size: 11px;
+    font-weight: 550;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .req-meta {
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  .req-arrow { color: var(--faint); font-size: 12px; }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 5px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    letter-spacing: 0.035em;
+    line-height: 1.35;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .status::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status[data-tone="work"] { border-color: var(--accent); color: var(--accent); }
+  .status[data-tone="done"] { border-color: var(--ok); color: var(--ok); }
+  .status[data-tone="warn"] { border-color: var(--warn); color: var(--warn); }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 9px;
+  }
+
+  .pager-btn {
+    width: auto;
+    min-width: 69px;
+    min-height: 26px;
+    padding: 4px 7px;
+    font-size: 9.5px;
+  }
+
+  .page-label {
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    text-align: center;
+  }
+
+  .list-count {
+    margin: 5px 1px 0;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8px;
+  }
+
+  .detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 7px 0;
+  }
+
+  .detail-head h3 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.15;
+  }
+
+  .detail-id {
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    white-space: nowrap;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin: 9px 0;
+    padding: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+
+  .detail-grid div { display: grid; gap: 1px; }
+  .detail-grid dt {
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .detail-grid dd { margin: 0; font-size: 10.5px; line-height: 1.4; }
+
+  .detail-description {
+    margin: 8px 0;
+    padding: 8px;
+    border-left: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+  }
+
+  .timeline {
+    list-style: none;
+    margin: 9px 0;
+    padding: 0 0 0 11px;
+    border-left: 1px solid var(--line);
+  }
+
+  .timeline li {
+    position: relative;
+    padding: 0 0 8px 7px;
+    font-size: 9.5px;
+    line-height: 1.45;
+    color: var(--bubble-meta);
+  }
+
+  .timeline li:last-child { padding-bottom: 0; }
+
+  .timeline li::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    left: -14px;
+    width: 5px;
+    height: 5px;
+    border: 1px solid var(--bubble-meta);
+    border-radius: 50%;
+    background: var(--bot-bubble);
+  }
+
+  .timeline strong { color: var(--ink); font-weight: 550; }
+
+  .setting-group {
+    margin: 0 0 11px;
+    padding: 9px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+
+  .setting-group-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 3px;
+  }
+
+  .setting-group-head h4 {
+    margin: 0;
+    font-size: 10.5px;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+  }
+
+  .version-chip {
+    padding: 2px 4px;
+    border: 1px solid var(--line);
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    white-space: nowrap;
+  }
+
+  .setting-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 9px;
+    align-items: start;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .setting-row:first-of-type { border-top: 0; padding-top: 4px; }
+  .setting-row:last-of-type { padding-bottom: 0; }
+
+  .setting-copy label,
+  .setting-copy .setting-label {
+    display: block;
+    color: var(--ink);
+    font-size: 10.5px;
+    font-weight: 550;
+    line-height: 1.35;
+  }
+
+  .setting-copy p {
+    margin: 2px 0 0;
+    color: var(--bubble-meta);
+    font-size: 8.5px;
+    line-height: 1.4;
+  }
+
+  .switch-wrap {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .switch-state {
+    min-width: 20px;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    text-align: right;
+    text-transform: uppercase;
+  }
+
+  .switch {
+    position: relative;
+    display: inline-flex;
+    width: 33px;
+    height: 19px;
+    flex: none;
+    cursor: pointer;
+  }
+
+  .switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .switch .track {
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: var(--bubble-line);
+    transition: background 0.12s ease;
+  }
+
+  .switch .track::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: transform 0.12s ease;
+  }
+
+  .switch input:checked + .track { background: var(--accent); border-color: var(--accent); }
+  .switch input:checked + .track::after { transform: translateX(14px); }
+  .switch input:focus-visible + .track { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .switch input:disabled + .track { opacity: 0.45; }
+  .switch input:disabled { cursor: not-allowed; }
+
+  .mock-select {
+    max-width: 56%;
+    min-height: 27px;
+    padding: 3px 5px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 10px;
+  }
+
+  .settings-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 9px;
+  }
+
+  .settings-actions .kb { width: auto; flex: 1 1 100px; min-height: 28px; font-size: 10px; }
+
+  .dirty-state {
+    margin: 5px 1px 0;
+    color: var(--bubble-meta);
+    font-size: 8.5px;
+    line-height: 1.4;
+  }
+
+  .dirty-state strong { color: var(--accent); font-weight: 550; }
+
+  .scope-reason { margin: -5px 1px 9px; }
+
+  .ticket {
+    margin-top: 9px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .ticket-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 7px;
+    padding: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ticket-head h4 {
+    margin: 0 0 2px;
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.15;
+  }
+
+  .ticket-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 8px;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8px;
+  }
+
+  .ticket-body { padding: 8px; }
+  .ticket-body > p { margin: 0 0 7px; font-size: 10px; line-height: 1.45; color: var(--bubble-meta); }
+
+  .internal-note {
+    margin: 8px 0;
+    padding: 7px;
+    border: 1px dashed var(--warn);
+    background: var(--warn-soft);
+    color: var(--bubble-ink);
+  }
+
+  .note-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    margin-bottom: 3px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 4px;
+    border: 1px solid currentColor;
+    color: var(--warn);
+    font-family: var(--mono);
+    font-size: 7px;
+    letter-spacing: 0.035em;
+    line-height: 1.3;
+    text-transform: uppercase;
+  }
+
+  .tag.blue { color: var(--accent); }
+  .tag.red { color: var(--danger); }
+  .tag.green { color: var(--ok); }
+
+  .privacy-note {
+    color: var(--warn);
+    font-family: var(--mono);
+    font-size: 7px;
+    letter-spacing: 0.02em;
+  }
+
+  .internal-note p {
+    margin: 0;
+    font-size: 9.5px;
+    line-height: 1.45;
+  }
+
+  .note-meta {
+    margin-top: 3px !important;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 7.5px !important;
+  }
+
+  .reassign {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+
+  .reassign label {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--ink);
+    font-size: 9.5px;
+    font-weight: 550;
+  }
+
+  .reassign .mock-select { max-width: 100%; width: 100%; }
+  .reassign-actions { display: flex; gap: 4px; margin-top: 5px; }
+  .reassign-actions .kb { min-height: 26px; font-size: 9.5px; }
+
+  .empty-panel,
+  .error-panel,
+  .stale-panel,
+  .conflict-panel,
+  .locked-panel {
+    padding: 15px 12px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .empty-panel {
+    border-style: dashed;
+    text-align: center;
+  }
+
+  .empty-mark {
+    display: grid;
+    place-items: center;
+    width: 35px;
+    height: 35px;
+    margin: 0 auto 8px;
+    border: 1px dashed var(--line-strong);
+    border-radius: 50%;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 15px;
+  }
+
+  .empty-panel h3,
+  .error-panel h3,
+  .stale-panel h3,
+  .conflict-panel h3,
+  .locked-panel h3 {
+    margin: 0 0 4px;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 1.15;
+  }
+
+  .empty-panel p,
+  .error-panel p,
+  .stale-panel p,
+  .conflict-panel p,
+  .locked-panel p {
+    margin: 0;
+    color: var(--bubble-meta);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .error-panel {
+    border-left: 3px solid var(--danger);
+    background: var(--danger-soft);
+  }
+
+  .error-panel .tag { color: var(--danger); }
+
+  .stale-panel {
+    border-left: 3px solid var(--warn);
+    background: var(--warn-soft);
+  }
+
+  .conflict-panel {
+    border-left: 3px solid var(--warn);
+    background: var(--warn-soft);
+  }
+
+  .locked-panel {
+    border-left: 3px solid var(--line-strong);
+    background: var(--surface-2);
+  }
+
+  .panel-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 10px;
+  }
+
+  .panel-actions .kb { width: auto; flex: 1 1 95px; min-height: 28px; font-size: 10px; }
+
+  .state-switch-label {
+    margin: 0 0 6px;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .stale-card {
+    margin-top: 8px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    background: var(--bot-bubble);
+  }
+
+  .stale-card .detail-head { margin-top: 0; }
+  .stale-card .detail-head h3 { font-size: 16px; }
+
+  .callback-note {
+    margin: 8px 0 0;
+    padding: 5px 7px;
+    border: 1px dashed var(--line);
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .access-person {
+    display: grid;
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .access-person label,
+  .access-role-label {
+    color: var(--ink);
+    font-size: 9.5px;
+    font-weight: 550;
+  }
+
+  .access-person .mock-select { max-width: 100%; width: 100%; }
+
+  .person-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    margin-top: 8px;
+    padding: 7px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+  }
+
+  .person-line strong { display: block; font-size: 10px; font-weight: 600; }
+  .person-line small { display: block; color: var(--bubble-meta); font-family: var(--mono); font-size: 7.5px; }
+
+  .access-form { margin-top: 9px; }
+  .access-form .mock-select { max-width: 100%; width: 100%; margin-top: 3px; }
+
+  .policy-note {
+    margin: 7px 0 0;
+    color: var(--bubble-meta);
+    font-size: 9px;
+    line-height: 1.45;
+  }
+
+  .confirm-panel {
+    margin-top: 9px;
+    padding: 11px;
+    border: 1px solid var(--accent);
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  .confirm-panel.danger {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+  }
+
+  .confirm-panel h3 {
+    margin: 0 0 5px;
+    font-family: var(--serif);
+    font-size: 19px;
+    font-weight: 400;
+    line-height: 1.15;
+  }
+
+  .confirm-panel p {
+    margin: 0;
+    color: var(--bubble-meta);
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .consequences {
+    margin: 7px 0;
+    padding-left: 15px;
+    color: var(--bubble-meta);
+    font-size: 9.5px;
+    line-height: 1.5;
+  }
+
+  .consequences li { margin-bottom: 2px; }
+  .consequences strong { color: var(--danger); font-weight: 600; }
+
+  .confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 9px;
+  }
+
+  .confirm-actions .kb { width: auto; flex: 1 1 95px; font-size: 9.5px; }
+
+  .audit {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+
+  .audit-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 7px;
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .audit-list {
+    list-style: none;
+    margin: 5px 0 0;
+    padding: 0;
+    font-size: 8.5px;
+    line-height: 1.45;
+    color: var(--bubble-meta);
+  }
+
+  .audit-list li { padding: 4px 0; border-top: 1px solid var(--line); }
+  .audit-list strong { color: var(--ink); font-weight: 550; }
+  .audit-empty { margin: 5px 0 0; color: var(--bubble-meta); font-size: 8.5px; }
+  .safety-note {
+    margin: 7px 0 0;
+    color: var(--bubble-meta);
+    font-size: 8.5px;
+    line-height: 1.45;
+    padding-left: 7px;
+    border-left: 1px solid var(--warn);
+  }
+
+  .tombstone {
+    margin-top: 9px;
+    padding: 17px 12px;
+    border: 1px dashed var(--line-strong);
+    background: var(--surface-2);
+    text-align: center;
+  }
+
+  .tombstone h3 { margin: 0 0 3px; font-family: var(--serif); font-size: 18px; font-weight: 400; }
+  .tombstone p { margin: 0; color: var(--bubble-meta); font-size: 9.5px; }
+
+  .channel-post {
+    margin: 0;
+    border: 1px solid var(--bubble-line);
+    border-radius: 8px;
+    background: var(--bot-bubble);
+    color: var(--bubble-ink);
+    overflow: hidden;
+    box-shadow: 0 12px 30px -26px rgba(10, 20, 30, 0.6);
+  }
+
+  .post-head {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--bubble-line);
+  }
+
+  .channel-avatar {
+    display: grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--mono);
+    font-size: 9px;
+  }
+
+  .post-head strong { display: block; font-size: 10.5px; font-weight: 650; line-height: 1.3; }
+  .post-head span { display: block; color: var(--bubble-meta); font-family: var(--mono); font-size: 7.5px; }
+  .post-head .tag { margin-left: auto; }
+
+  .post-copy { padding: 11px; }
+
+  .post-copy h3 {
+    margin: 0 0 5px;
+    font-family: var(--serif);
+    font-size: 23px;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.06;
+  }
+
+  .post-copy > p {
+    margin: 0 0 8px;
+    color: var(--bubble-ink);
+    font-size: 10.5px;
+    line-height: 1.55;
+  }
+
+  .rich-table-wrap {
+    margin: 8px 0;
+    overflow-x: auto;
+    border: 1px solid var(--line);
+  }
+
+  .rich-table {
+    width: 100%;
+    min-width: 238px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 9px;
+    line-height: 1.35;
+  }
+
+  .rich-table caption {
+    padding: 5px 6px;
+    border-bottom: 1px solid var(--line);
+    color: var(--bubble-meta);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .rich-table th,
+  .rich-table td {
+    padding: 5px 5px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+
+  .rich-table tr:last-child td { border-bottom: 0; }
+  .rich-table th {
+    background: var(--surface-2);
+    color: var(--ink);
+    font-weight: 650;
+    font-size: 8px;
+  }
+  .rich-table tbody tr:nth-child(even) td { background: var(--surface-2); }
+
+  .post-details {
+    margin: 8px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .post-details summary {
+    padding: 7px 0;
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 550;
+    cursor: pointer;
+  }
+
+  .post-details summary::marker { color: var(--accent); }
+
+  .post-details .details-body {
+    padding: 0 0 8px;
+    color: var(--bubble-meta);
+    font-size: 9.5px;
+    line-height: 1.5;
+  }
+
+  .post-details .details-body p { margin: 0; }
+
+  .post-footnote {
+    margin: 8px 0 0 !important;
+    padding-top: 7px;
+    border-top: 1px solid var(--line);
+    color: var(--bubble-meta) !important;
+    font-size: 8px !important;
+    line-height: 1.45 !important;
+  }
+
+  .rich-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 9px;
+  }
+
+  .rich-btn {
+    flex: 1 1 auto;
+    min-height: 29px;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 550;
+    cursor: pointer;
+  }
+
+  .rich-btn.primary { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+  .rich-btn:hover { border-color: var(--accent); background: var(--accent-soft); }
+  .rich-btn.primary:hover { background: var(--accent-strong); color: var(--on-accent); }
+
+  .stage-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 15px;
+    margin-top: 13px;
+    padding-top: 9px;
+    border-top: 1px solid var(--line);
+  }
+
+  .status-line {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    min-width: 0;
+    margin: 0;
+    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.45;
+  }
+
+  .status-line .mono {
+    flex: none;
+    color: var(--faint);
+    font-size: 8px;
+    letter-spacing: 0.08em;
+  }
+
+  .stage-foot-note {
+    margin: 0;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 1.45;
+    text-align: right;
+  }
+
+  .rail {
+    position: sticky;
+    top: 18px;
+    min-width: 0;
+    border-left: 1px solid var(--line);
+    padding-left: clamp(16px, 2vw, 25px);
+  }
+
+  .rail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .rail-head h2 {
+    margin: 3px 0 0;
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .rail-index {
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    padding-top: 3px;
+  }
+
+  .rail-block {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .rail-kicker {
+    margin-bottom: 5px;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .rail-purpose,
+  .rail-rule {
+    margin: 0;
+    color: var(--ink);
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  .rail-rule {
+    padding-left: 9px;
+    border-left: 2px solid var(--accent);
+    color: var(--muted);
+    font-size: 11.5px;
+  }
+
+  .role-card {
+    padding: 9px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .role-card[data-verdict="blocked"] { border-left: 3px solid var(--line-strong); }
+  .role-card[data-verdict="partial"] { border-left: 3px solid var(--warn); }
+  .role-card[data-verdict="ok"] { border-left: 3px solid var(--ok); }
+
+  .role-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .role-name {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .verdict {
+    padding: 2px 4px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+
+  .verdict-ok { border-color: var(--ok); color: var(--ok); }
+  .verdict-partial { border-color: var(--warn); color: var(--warn); }
+  .verdict-blocked { border-color: var(--line-strong); color: var(--muted); }
+
+  .role-head {
+    margin: 0 0 3px !important;
+    color: var(--ink);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .role-card p {
+    margin: 0 0 5px;
+    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+
+  .role-card .scope-line {
+    margin: 0;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 1.4;
+  }
+
+  .trace {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .trace li {
+    display: grid;
+    grid-template-columns: 17px minmax(0, 1fr);
+    gap: 7px;
+    padding: 0 0 9px;
+  }
+
+  .trace li:last-child { padding-bottom: 0; }
+
+  .trace-num {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 7px;
+    line-height: 1;
+  }
+
+  .trace-label {
+    display: block;
+    margin: 1px 0 1px;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .trace p,
+  .trace code {
+    display: block;
+    margin: 0;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 10.5px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .trace code {
+    width: fit-content;
+    max-width: 100%;
+    padding: 2px 4px;
+    background: var(--surface-2);
+    color: var(--accent-strong);
+    font-family: var(--mono);
+    font-size: 9px;
+    white-space: pre-wrap;
+  }
+
+  .rail-payload {
+    margin-top: 12px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .rail-payload summary {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 0;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .rail-payload summary span {
+    color: var(--faint);
+    font-size: 7.5px;
+    letter-spacing: 0.02em;
+    text-transform: none;
+  }
+
+  .rail-payload pre {
+    max-height: 270px;
+    margin: 0 0 7px;
+    overflow: auto;
+    padding: 9px;
+    border: 1px solid var(--line);
+    background: var(--code-bg);
+    color: var(--code-ink);
+    font-family: var(--mono);
+    font-size: 9.5px;
+    line-height: 1.5;
+    white-space: pre;
+  }
+
+  .payload-note {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 9.5px;
+    line-height: 1.5;
+  }
+
+  .rail-source {
+    margin: 11px 0 0;
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 7.5px;
+    line-height: 1.55;
+  }
+
+  .page-footer {
+    padding: 24px 0 30px;
+    border-top: 1px solid var(--ink);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(18px, 4vw, 54px);
+    padding-bottom: 20px;
+  }
+
+  .footer-grid h2 {
+    margin: 0 0 6px;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 8.5px;
+    font-weight: 500;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
+  .footer-grid p,
+  .footer-grid ul {
+    margin: 0;
+    color: var(--muted);
+    font-size: 10.5px;
+    line-height: 1.55;
+  }
+
+  .footer-grid ul { padding-left: 14px; }
+  .footer-grid li { margin-bottom: 2px; }
+
+  .footer-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px 20px;
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 8px;
+    line-height: 1.5;
+  }
+
+  .footer-line span:last-child { text-align: right; }
+
+  @media (max-width: 1200px) {
+    .handbook {
+      grid-template-columns: 190px minmax(0, 1fr);
+    }
+
+    .rail {
+      grid-column: 1 / -1;
+      position: static;
+      display: block;
+      border-left: 0;
+      border-top: 1px solid var(--ink);
+      padding: 20px 0 0;
+    }
+
+    #rail-content {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 30px;
+    }
+
+    #rail-content > .rail-payload,
+    #rail-content > .rail-source {
+      grid-column: 1 / -1;
+    }
+
+    #rail-content > .rail-block:nth-of-type(4) { border-bottom: 0; }
+    #rail-content > .rail-payload { margin-top: 0; }
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      grid-template-columns: 1fr;
+      gap: 25px;
+      align-items: start;
+    }
+
+    .hero h1 { max-width: 17ch; }
+
+    .reading-key {
+      max-width: 480px;
+    }
+
+    .handbook {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .pattern-nav {
+      position: static;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav-head { padding-bottom: 7px; }
+
+    .pattern-nav nav {
+      display: flex;
+      gap: 5px;
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+      padding: 6px 0 3px;
+      scrollbar-width: thin;
+    }
+
+    .nav-group { display: contents; }
+    .nav-label { display: none; }
+
+    .nav-list {
+      display: flex;
+      gap: 5px;
+      flex: none;
+    }
+
+    .nav-list li { flex: none; }
+
+    .nav-list a {
+      display: flex;
+      gap: 5px;
+      align-items: baseline;
+      margin: 0;
+      padding: 6px 8px;
+      border: 1px solid var(--line);
+      border-left-width: 1px;
+      background: var(--surface);
+      white-space: nowrap;
+      font-size: 10.5px;
+    }
+
+    .nav-list a[aria-current="page"] {
+      border-color: var(--ink);
+      border-left-color: var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .nav-list a[aria-current="page"] .nav-num { color: var(--paper); opacity: 0.6; }
+
+    .nav-note { display: none; }
+
+    #rail-content { grid-template-columns: minmax(0, 1fr); }
+
+    #rail-content > .rail-payload,
+    #rail-content > .rail-source { grid-column: auto; }
+
+    #rail-content > .rail-block:nth-of-type(4) { border-bottom: 1px solid var(--line); }
+
+    .footer-grid { grid-template-columns: 1fr; gap: 16px; }
+  }
+
+  @media (max-width: 700px) {
+    body { font-size: 15px; }
+
+    .masthead {
+      align-items: flex-start;
+      padding: 10px 0;
+    }
+
+    .brand-sub { display: none; }
+
+    .masthead-tools { gap: 4px; }
+
+    .width-picker { display: none; }
+
+    .hero { padding-top: 30px; }
+
+    .hero h1 { font-size: clamp(34px, 10vw, 46px); }
+
+    .hero-meta { gap: 4px 10px; font-size: 9px; }
+
+    .disclaimer {
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 9px;
+      padding: 13px;
+    }
+
+    .offline-badge { display: none; }
+
+    .stage-head { gap: 8px; }
+
+    .stage-head p { font-size: 11.5px; }
+
+    .stage-toolbar { align-items: start; }
+
+    .segmented span { padding: 6px 7px; font-size: 10.5px; }
+
+    .device,
+    .device[data-width="narrow"] {
+      width: 100%;
+      margin-top: 12px;
+      padding: 6px;
+      border-radius: 21px;
+    }
+
+    .device-chrome { padding: 1px 6px 6px; font-size: 7px; }
+
+    .chat {
+      height: auto;
+      min-height: 0;
+      border-radius: 15px;
+    }
+
+    .chat-stream {
+      max-height: min(68vh, 620px);
+      min-height: 450px;
+      padding: 11px 9px 13px;
+    }
+
+    .msg { max-width: 100%; }
+
+    .stage-foot { display: block; }
+
+    .stage-foot-note { margin-top: 5px; text-align: left; }
+
+    .reading-key { max-width: none; }
+
+    .footer-line { display: block; }
+    .footer-line span:last-child { display: block; margin-top: 4px; text-align: left; }
+  }
+
+  @media (max-width: 390px) {
+    .page-shell { padding-left: 10px; padding-right: 10px; }
+    .brand-mark { width: 30px; height: 30px; }
+    .brand-title { font-size: 11.5px; }
+    .tool-button { font-size: 9px; padding: 5px 7px; }
+    .hero h1 { font-size: 33px; }
+    .stage-head h2 { font-size: 23px; }
+    .segmented { width: 100%; }
+    .segmented label { flex: 1 1 auto; }
+    .segmented span { text-align: center; padding-left: 5px; padding-right: 5px; }
+    .kb-row { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#specimen">Перейти к макету</a>
+
+<div class="page-shell">
+  <header class="masthead">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">TE</span>
+      <div class="brand-copy">
+        <span class="brand-title">Telegram engineering</span>
+        <span class="brand-sub">offline interface reference</span>
+      </div>
+    </div>
+    <div class="masthead-tools">
+      <button class="tool-button" type="button" data-action="theme" id="theme-toggle" aria-label="Переключить светлую или тёмную тему">Тема · светлая</button>
+    </div>
+  </header>
+
+  <section class="hero" aria-labelledby="page-title">
+    <div>
+      <span class="eyebrow">Telegram engineering · reference · 10.3</span>
+      <h1 id="page-title">Интерфейсная галерея <span class="accent">Telegram-паттернов</span></h1>
+      <p class="hero-lead">Девять интерактивных экранов для выбора структуры меню, прав, состояний и rich-контента. Выберите сценарий, переключите иллюстративную роль и сверьте трассу: что видит человек, что происходит при нажатии и где проходит серверная граница.</p>
+      <p class="hero-meta"><span>9 сценариев</span><span>4 роли</span><span>2 темы</span><span>0 сетевых запросов</span></p>
+    </div>
+    <aside class="reading-key" aria-label="Как читать галерею">
+      <span class="eyebrow">Как читать</span>
+      <ol>
+        <li><span><strong>Выберите паттерн.</strong> Слева — только сценарии, без имитации продукта.</span></li>
+        <li><span><strong>Переключите роль.</strong> Смотрите, какие действия появляются и какие остаются за границей.</span></li>
+        <li><span><strong>Сверьте трассу.</strong> Справа — текст → действие → проверка → переход, а не скриншот.</span></li>
+      </ol>
+    </aside>
+  </section>
+
+  <div class="disclaimer" role="note">
+    <span class="disclaimer-mark" aria-hidden="true">!</span>
+    <div>
+      <strong>Интерактивные макеты — не клиент Telegram.</strong>
+      <p>Страница не подключена к Telegram, не отправляет сообщения и не проверяет авторизацию. Роли, данные, версии и переходы иллюстративные; вид в реальном клиенте и серверные правила здесь не подтверждаются. Это референс для проектирования.</p>
+    </div>
+    <span class="offline-badge">офлайн</span>
+  </div>
+
+  <main class="handbook">
+    <aside class="pattern-nav" aria-label="Сценарии галереи">
+      <div class="nav-head">
+        <span class="eyebrow">Паттерны</span>
+        <span class="nav-count">09</span>
+      </div>
+      <nav aria-label="Паттерны интерфейса">
+        <div class="nav-group">
+          <p class="nav-label">Основа</p>
+          <ul class="nav-list">
+            <li><a href="#menu" data-nav="menu"><span class="nav-num">01</span><span>Главное меню</span></a></li>
+            <li><a href="#form" data-nav="form"><span class="nav-num">02</span><span>Форма заявки</span></a></li>
+            <li><a href="#list" data-nav="list"><span class="nav-num">03</span><span>Список и карточка</span></a></li>
+            <li><a href="#settings" data-nav="settings"><span class="nav-num">04</span><span>Настройки</span></a></li>
+          </ul>
+        </div>
+        <div class="nav-group">
+          <p class="nav-label">Команда и права</p>
+          <ul class="nav-list">
+            <li><a href="#queue" data-nav="queue"><span class="nav-num">05</span><span>Очередь оператора</span></a></li>
+            <li><a href="#access" data-nav="access"><span class="nav-num">06</span><span>Доступ и роли</span></a></li>
+          </ul>
+        </div>
+        <div class="nav-group">
+          <p class="nav-label">Границы</p>
+          <ul class="nav-list">
+            <li><a href="#danger" data-nav="danger"><span class="nav-num">07</span><span>Опасное действие</span></a></li>
+            <li><a href="#states" data-nav="states"><span class="nav-num">08</span><span>Пусто · ошибка · stale</span></a></li>
+          </ul>
+        </div>
+        <div class="nav-group">
+          <p class="nav-label">Контент</p>
+          <ul class="nav-list">
+            <li><a href="#rich" data-nav="rich"><span class="nav-num">09</span><span>Rich-пост</span></a></li>
+          </ul>
+        </div>
+      </nav>
+      <p class="nav-note">Снимок Bot API 10.3<br>26.10.2026<br><span>Данные иллюстративные</span></p>
+    </aside>
+
+    <section class="stage" id="stage" aria-labelledby="scene-title" tabindex="-1">
+      <div class="stage-head">
+        <div>
+          <span class="eyebrow" id="scene-group">Навигация</span>
+          <h2 id="scene-title">Главное меню</h2>
+          <p id="scene-subtitle">Один вход: основное действие, личные разделы и управление по роли.</p>
+        </div>
+        <span class="stage-count" id="scene-count">01 / 09</span>
+      </div>
+
+      <div class="stage-toolbar">
+        <fieldset class="role-picker">
+          <legend>Смотреть как</legend>
+          <div class="segmented" role="radiogroup" aria-label="Иллюстративная роль">
+            <label><input type="radio" name="role" value="client" data-action="role" checked><span>Клиент</span></label>
+            <label><input type="radio" name="role" value="operator" data-action="role"><span>Оператор</span></label>
+            <label><input type="radio" name="role" value="admin" data-action="role"><span>Администратор</span></label>
+            <label><input type="radio" name="role" value="owner" data-action="role"><span>Владелец</span></label>
+          </div>
+          <p class="role-note" id="role-note"><strong>Клиент</strong> · свои объекты · это иллюстрация, не проверка доступа</p>
+        </fieldset>
+        <div class="width-picker" role="group" aria-label="Ширина макета">
+          <span>Ширина</span>
+          <button type="button" data-action="width" data-value="normal" aria-pressed="true">396</button>
+          <button type="button" data-action="width" data-value="narrow" aria-pressed="false">360</button>
+        </div>
+      </div>
+
+      <div class="device" id="specimen" data-width="normal" tabindex="-1" aria-label="Интерактивный макет, не клиент Telegram">
+        <div class="device-chrome" aria-hidden="true">
+          <span>Макет · офлайн</span>
+          <span>не клиент Telegram</span>
+        </div>
+        <div class="chat">
+          <header class="chat-head">
+            <span class="chat-back" aria-hidden="true">‹</span>
+            <span class="chat-avatar" id="chat-avatar" aria-hidden="true">Б</span>
+            <div class="chat-id">
+              <span class="chat-name" id="chat-title">Бот поддержки</span>
+              <span class="chat-kind" id="chat-kind">личный чат · макет</span>
+            </div>
+            <span class="demo-pill">демо</span>
+          </header>
+          <div class="chat-stream" id="chat-stream" tabindex="0" role="region" aria-label="Интерактивный макет: главное меню" data-scene="menu" data-role="client">
+            <!-- The interactive scene is rendered locally by the inline script. -->
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-foot">
+        <p class="status-line"><span class="mono">СОСТОЯНИЕ</span><span id="live-status" role="status" aria-live="polite">Макет открыт локально. Сеть не используется.</span></p>
+        <p class="stage-foot-note">изменения живут только в этой вкладке</p>
+      </div>
+    </section>
+
+    <aside class="rail" id="rail" aria-labelledby="rail-title">
+      <div class="rail-head">
+        <div>
+          <span class="eyebrow">Почему так</span>
+          <h2 id="rail-title">Разбор паттерна</h2>
+        </div>
+        <span class="rail-index" id="rail-index">01</span>
+      </div>
+      <div id="rail-content">
+        <!-- Rendered locally. -->
+      </div>
+    </aside>
+  </main>
+
+  <footer class="page-footer">
+    <div class="footer-grid">
+      <section>
+        <h2>Что показывает</h2>
+        <p>Иерархию меню, пошаговый ввод, список с пагинацией, настройки, очередь, границу ролей, подтверждение, состояния и rich-пост. Все управляющие элементы меняют только локальное состояние страницы.</p>
+      </section>
+      <section>
+        <h2>Чего здесь нет</h2>
+        <ul>
+          <li>подключения к Bot API и токенов;</li>
+          <li>настоящих аккаунтов, платежей и сообщений;</li>
+          <li>скриншотов Telegram или проверки его рендера;</li>
+          <li>клиентской авторизации и защиты данных.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Как проверять</h2>
+        <p>Сверяйте поведение с <span class="mono">references/gallery.md</span>, затем смотрите реальный бот в разрешённом тестовом чате на мобильной и десктопной ширине. Макет не заменяет эту проверку.</p>
+      </section>
+    </div>
+    <p class="footer-line"><span>Неофициальный учебный референс · Bot API 10.3 · снимок 26.10.2026</span><span>Telegram — товарный знак правообладателя; проект не связан с Telegram.</span></p>
+  </footer>
+</div>
+
+<script type="text/plain" id="payload-menu">POST sendMessage
+{
+  "chat_id": 123456789,
+  "text": "<b>Главное меню</b>\nВыберите раздел.",
+  "parse_mode": "HTML",
+  "reply_markup": {
+    "inline_keyboard": [
+      [{"text": "Создать заявку", "callback_data": "nav:new"}],
+      [{"text": "Мои заявки", "callback_data": "nav:list"},
+       {"text": "Настройки", "callback_data": "nav:settings"}],
+      [{"text": "Управление", "callback_data": "nav:admin"}]
+    ]
+  }
+}
+# «Управление» отправляется только при серверном permission.
+# callback_data: 1–64 байта UTF-8; это не доказательство роли.</script>
+
+<script type="text/plain" id="payload-form"># шаг 1 — выбор темы
+[{"text": "Доступ к аккаунту", "callback_data": "form:topic:access"}]
+
+# шаг 3 — подтверждение; версия и id выдаются сервером
+[{"text": "Подтвердить", "callback_data": "form:submit:5127:v3"}]
+
+# текст пользователя приходит обычным message update,
+# не подставляется в callback_data и не рендерится как доверенный HTML.</script>
+
+<script type="text/plain" id="payload-list"># карточка и следующая страница
+[{"text": "Открыть №1042", "callback_data": "req:open:1042"}]
+[{"text": "Далее", "callback_data": "req:page:2:f:all"}]
+
+# сервер проверяет фильтр, страницу и границы доступа вместе;
+# сортировка стабильна: created_at + id.</script>
+
+<script type="text/plain" id="payload-settings"># личный переключатель в inline-кнопке
+[{"text": "Сводка: выключить", "callback_data": "set:digest:0:v3"}]
+[{"text": "Сохранить", "callback_data": "set:save:v3"}]
+
+# Если это Mini App, сырой initData проверяется на сервере;
+# клиентский user_id, localStorage и URL-параметр роли недоверенные.
+# Рабочие настройки — отдельный scope и отдельная серверная проверка.</script>
+
+<script type="text/plain" id="payload-queue"># взять обращение
+[{"text": "Взять в работу", "callback_data": "q:take:1042:v2"}]
+# закрыть / переназначить
+[{"text": "Закрыть обращение", "callback_data": "q:close:1042:v3"}]
+[{"text": "Переназначить", "callback_data": "q:reassign:1042:v3"}]
+
+# Назначение должно быть атомарным; внутренняя заметка не уходит клиенту.
+# callback_data не содержит роли исполнителя.</script>
+
+<script type="text/plain" id="payload-access"># проверка изменения и подтверждение
+[{"text": "Проверить изменение", "callback_data": "role:check:4821:operator"}]
+[{"text": "Подтвердить", "callback_data": "role:ok:4821:operator:v1"}]
+
+# actor берётся из update, права — из серверного хранилища.
+# Владелец задаётся доверенным конфигом; последнего владельца нельзя понизить.</script>
+
+<script type="text/plain" id="payload-danger"># запрос подтверждения и одноразовое подтверждение
+[{"text": "Удалить черновик", "callback_data": "del:ask:4821:v3"}]
+[{"text": "Удалить безвозвратно", "callback_data": "del:ok:4821:v3:t7"}]
+
+# Подтверждение привязано к actor, объекту, версии и сроку.
+# Токен не заменяет проверку владения; повтор не удаляет второй раз.</script>
+
+<script type="text/plain" id="payload-states"># карточка, отправленная до изменения статуса
+[{"text": "Подтвердить", "callback_data": "req:ok:1042:v2"}]
+
+# ответ: версия не совпала → конфликт, обновлённая карточка,
+# повторный переход не выполняется. Это не успех и не ошибка сети.</script>
+
+<script type="text/plain" id="payload-rich">POST sendRichMessage
+{
+  "chat_id": -1001234567890,
+  "rich_message": {
+    "html": "<h2>Обновление тарифов</h2><p>С 1 ноября действуют новые условия. Ниже — сравнение без скрытых строк.</p><table bordered striped compact><caption>Учебные значения</caption><tr><th>План</th><th>Цена</th><th>Что входит</th></tr><tr><td>Базовый</td><td>500 ₽</td><td>Меню и заявки</td></tr><tr><td>Команда</td><td>1500 ₽</td><td>Роли и очередь</td></tr></table><details><summary>Как считается стоимость</summary><p>Стоимость фиксируется на сервере до отправки инвойса; в rich-посте показан учебный пример.</p></details><tg-button-row><tg-button type=\"callback_data\" style=\"primary\" data=\"plan:choose\">Выбрать тариф</tg-button></tg-button-row>"
+  }
+}
+
+# rich-лимиты снимка: 32768 UTF-8 chars, 500 блоков, 16 уровней,
+# 50 медиа, 20 колонок. В sendMessage(parse_mode=HTML) table/details нет.</script>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (selector, root) { return (root || document).querySelector(selector); };
+  var $$ = function (selector, root) { return Array.prototype.slice.call((root || document).querySelectorAll(selector)); };
+
+  function esc(value) {
+    return String(value === null || value === undefined ? '' : value).replace(/[&<>"']/g, function (character) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+    });
+  }
+
+  function sameObject(left, right) {
+    return JSON.stringify(left) === JSON.stringify(right);
+  }
+
+  function recordsWord(count) {
+    var last = count % 10;
+    var lastTwo = count % 100;
+    if (last === 1 && lastTwo !== 11) { return 'запись'; }
+    if (last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14)) { return 'записи'; }
+    return 'записей';
+  }
+
+  var SCENES = {
+    menu: {
+      n: '01',
+      group: 'Навигация',
+      title: 'Главное меню',
+      subtitle: 'Один вход: основное действие, личные разделы и управление по роли.',
+      chatTitle: 'Бот поддержки',
+      chatKind: 'личный чат · макет',
+      avatar: 'Б',
+      purpose: 'Собрать основное действие, личные разделы и управление, не смешивая уровни. Первая кнопка создаёт заявку; список и настройки идут ниже; управление показывается только разрешённой роли.',
+      rule: 'Скрытие кнопки — не авторизация. Сервер проверяет actor, роль, scope и актуальное состояние на каждом нажатии, даже если кнопка уже отправлена.',
+      payloadNote: 'Обычное сообщение: кнопки содержат одно действие. callback_data — короткое действие, не роль, не цена и не объект целиком.'
+    },
+    form: {
+      n: '02',
+      group: 'Ввод',
+      title: 'Форма заявки',
+      subtitle: 'Тема → описание → предпросмотр → подтверждение; Back и Cancel различаются.',
+      chatTitle: 'Бот поддержки',
+      chatKind: 'личный чат · макет',
+      avatar: 'Б',
+      purpose: 'Провести пользователя через короткий пошаговый ввод, сохранить допустимый ввод при возврате и отделить предпросмотр от commit. Текст пользователя не становится доверенным HTML.',
+      rule: 'Назад сохраняет допустимый ввод; отмена завершает черновик без операции; commit выполняется отдельным подтверждением и только в рабочем боте.',
+      payloadNote: 'Пользовательский текст приходит обычным message update. callback_data содержит действие и серверный идентификатор, но не сам текст.'
+    },
+    list: {
+      n: '03',
+      group: 'Навигация',
+      title: 'Список и карточка',
+      subtitle: 'Фильтр, стабильные страницы и карточка только своего объекта.',
+      chatTitle: 'Бот поддержки',
+      chatKind: 'личный чат · макет',
+      avatar: 'Б',
+      purpose: 'Показать набор объектов с фильтром и границами страниц, а затем карточку с достаточным контекстом и безопасным возвратом. Личный список не подменяет рабочую очередь.',
+      rule: 'Сортировка стабильна: created_at + id. Фильтр, страница и границы доступа проверяются вместе, а старый номер страницы не доказывает актуальную выборку.',
+      payloadNote: 'В callback передаётся короткий id/страница. Сами данные и доступ к объекту запрашиваются заново по actor и scope.'
+    },
+    settings: {
+      n: '04',
+      group: 'Настройки',
+      title: 'Настройки',
+      subtitle: 'Черновик, сохранение и граница личных и рабочих настроек.',
+      chatTitle: 'Настройки',
+      chatKind: 'сервисный экран · макет',
+      avatar: 'Н',
+      purpose: 'Показать текущие значения, отдельный черновик и явное сохранение. Личные настройки не смешиваются с рабочими; зависимые поля объясняют блокировку.',
+      rule: 'Версия защищает от параллельного сохранения. Секреты и токены не выводятся в экран настроек; рабочие параметры требуют отдельного серверного permission.',
+      payloadNote: 'В боте переключатель может быть callback-действием с версией; в Mini App сырой initData проверяет сервер, а не клиентский user_id или localStorage.'
+    },
+    queue: {
+      n: '05',
+      group: 'Команда',
+      title: 'Очередь оператора',
+      subtitle: 'Назначение, закрытие и внутренние заметки с явной границей видимости.',
+      chatTitle: 'Очередь поддержки',
+      chatKind: 'панель команды · макет',
+      avatar: 'О',
+      purpose: 'Дать оператору рабочую очередь: фильтр, карточку, атомарное назначение и закрытие. Внутренняя заметка остаётся внутренней; переназначение — отдельное право.',
+      rule: 'Назначение атомарно и защищено версией. Заметка не попадает в клиентский рендер, а reassign доступен только администратору или владельцу в согласованном scope.',
+      payloadNote: 'Кнопка содержит действие над объектом, а не executor. Actor из update; назначение и версия проверяются в одной транзакции. В Bot API 10.3 обычная InlineKeyboardButton поддерживает disabled: объект DisabledButton вместо действия. Это UX, не серверная авторизация; старое активное нажатие всё равно проверяется.'
+    },
+    access: {
+      n: '06',
+      group: 'Права',
+      title: 'Доступ и роли',
+      subtitle: 'Показать роль, scope и последствия до изменения; подтвердить и записать в аудит.',
+      chatTitle: 'Доступ и роли',
+      chatKind: 'панель команды · макет',
+      avatar: 'Д',
+      purpose: 'Отделить просмотр ролей от изменения, показать scope и последствия, а затем провести подтверждение и аудит. Владелец задаётся конфигом, а не этим экраном.',
+      rule: 'RBAC в макете иллюстративен. Видимость кнопки не защита; последнего владельца нельзя понизить; отзыв роли должен влиять на уже отправленные кнопки.',
+      payloadNote: 'callback_data не содержит новую роль как доверенный факт. Сервер заново загружает actor, target, scope, версию и допустимость перехода.'
+    },
+    danger: {
+      n: '07',
+      group: 'Границы',
+      title: 'Опасное действие',
+      subtitle: 'Последствия, отдельное подтверждение и tombstone вместо тихого успеха.',
+      chatTitle: 'Бот поддержки',
+      chatKind: 'личный чат · макет',
+      avatar: 'Б',
+      purpose: 'Отделить необратимое действие от обычной навигации: назвать последствия, запросить отдельное подтверждение и показать результат. Отмена не должна менять объект.',
+      rule: 'Подтверждение привязано к actor, объекту, ожидаемой версии и сроку. Повтор или истёкшее подтверждение показывает актуальный результат без второго удаления.',
+      payloadNote: 'Одноразовый токен подтверждения дополняет ownership, но не заменяет его. В макете реальные данные не изменяются.'
+    },
+    states: {
+      n: '08',
+      group: 'Состояния',
+      title: 'Пусто · ошибка · stale',
+      subtitle: 'Разные причины — разные экраны и разные пути восстановления.',
+      chatTitle: 'Бот поддержки',
+      chatKind: 'личный чат · макет',
+      avatar: 'Б',
+      purpose: 'Показать пустой список, ошибку загрузки и устаревшую кнопку как три разных состояния. Пустое состояние предлагает следующий шаг; ошибка не маскируется под отказ в правах; stale не повторяет переход.',
+      rule: '403/permission — не ошибка загрузки. Устаревшая версия объекта — не success. Повторное нажатие не должно выполнять операцию второй раз.',
+      payloadNote: 'Устаревшая inline-кнопка может прийти снова. Версия объекта и текущий статус важнее нажатия; ответ показывает конфликт и актуальную карточку.'
+    },
+    rich: {
+      n: '09',
+      group: 'Контент',
+      title: 'Rich-пост',
+      subtitle: 'Иерархия, таблица и details в rich-сообщении, а не в обычном parse_mode.',
+      chatTitle: 'Канал проекта',
+      chatKind: 'канал · предпросмотр',
+      avatar: 'К',
+      purpose: 'Показать длинный материал с настоящей иерархией, таблицей и раскрываемыми условиями. Кнопки остаются рядом с нужным разделом и не превращают rich-пост в произвольную веб-страницу.',
+      rule: 'sendRichMessage и обычный sendMessage(parse_mode=HTML) — разные контракты. Rich HTML не поддерживает произвольные теги, CSS или JS; лимиты и точную грамматику проверяй по Bot API.',
+      payloadNote: 'rich_message содержит ровно один способ: html, markdown или blocks. Кнопка rich-поста — отдельный тип с собственными атрибутами и лимитом callback.'
+    }
+  };
+
+  var ROLE_INFO = {
+    client: { label: 'Клиент', scope: 'свои объекты' },
+    operator: { label: 'Оператор', scope: 'назначенная очередь' },
+    admin: { label: 'Администратор', scope: 'scope команды' },
+    owner: { label: 'Владелец', scope: 'конфигурация и продукт' }
+  };
+
+  var ROLE_VIEWS = {
+    menu: {
+      client: { state: 'ok', badge: 'Личное', head: 'Только личные разделы', body: 'Видны создание, свои заявки и настройки. «Управление» не отрисовано; это иллюстрация видимости, а не защита.', scope: 'свои объекты' },
+      operator: { state: 'partial', badge: 'Личное + очередь', head: 'Появляется рабочая очередь', body: 'Оператор получает очередь, но не смену ролей. Видимый пункт управления — приглашение, серверная проверка остаётся обязательной.', scope: 'назначенная очередь' },
+      admin: { state: 'partial', badge: 'Управление', head: 'Личные и командные разделы', body: 'Появляются очередь и доступ. Изменения ролей ограничены политикой команды; owner-права не добавляются автоматически.', scope: 'scope команды' },
+      owner: { state: 'ok', badge: 'Полный вход', head: 'Все разделы', body: 'Владелец задаётся доверенным конфигом, а не видимостью пункта. Опасные действия всё равно требуют подтверждения и аудита.', scope: 'конфигурация и продукт' }
+    },
+    form: {
+      client: { state: 'ok', badge: 'Свой черновик', head: 'Личная форма', body: 'Создаёт только собственную заявку. Чужие объекты не попадают в этот сценарий.', scope: 'свой черновик' },
+      operator: { state: 'ok', badge: 'Свой черновик', head: 'Личный сценарий', body: 'Оператор может заполнить личную форму; клиентские обращения он обрабатывает в очереди, а не здесь.', scope: 'свой черновик' },
+      admin: { state: 'ok', badge: 'Свой черновик', head: 'Без админского обхода', body: 'Роль не расширяет форму до чужих заявок. Админские операции — отдельный экран и отдельная проверка.', scope: 'свой черновик' },
+      owner: { state: 'ok', badge: 'Свой черновик', head: 'Роль не подменяет автора', body: 'Даже владелец здесь действует как автор личного черновика; чужие объекты требуют отдельного доступа.', scope: 'свой черновик' }
+    },
+    list: {
+      client: { state: 'ok', badge: 'Свои объекты', head: 'Личный список', body: 'Видны только собственные заявки. Пагинация не расширяет выборку: границы доступа применяются к каждому запросу.', scope: 'свои объекты' },
+      operator: { state: 'ok', badge: 'Свои объекты', head: 'Личный список', body: 'Это личный список оператора, а не рабочая очередь. Обращения клиентов открываются в отдельном сценарии с другим scope.', scope: 'свои объекты' },
+      admin: { state: 'ok', badge: 'Свои объекты', head: 'Без смешивания scope', body: 'Админский scope не подмешивается в личный список. Рабочие объекты должны иметь отдельный экран и явный фильтр.', scope: 'свои объекты' },
+      owner: { state: 'ok', badge: 'Свои объекты', head: 'Даже для владельца', body: 'Личный список остаётся личным. Роль не превращает его в выгрузку всех объектов без отдельного permission.', scope: 'свои объекты' }
+    },
+    settings: {
+      client: { state: 'partial', badge: 'Только личные', head: 'Личные настройки', body: 'Доступны уведомления, сводка и тихие часы. Рабочая область не открывается; интерфейс показывает только причину ограничения.', scope: 'свои настройки' },
+      operator: { state: 'partial', badge: 'Только личные', head: 'Личные настройки', body: 'Оператор настраивает свои уведомления. Рабочие SLA и очередь меняются в административном scope.', scope: 'свои настройки' },
+      admin: { state: 'ok', badge: 'Личные + рабочие', head: 'Две области', body: 'Доступна рабочая область команды с отдельной версией и отдельным сохранением. Это иллюстрация permission, не его проверка.', scope: 'команда' },
+      owner: { state: 'ok', badge: 'Личные + рабочие', head: 'Две области', body: 'Личные и рабочие значения не смешиваются. Секреты не выводятся; рабочие изменения должны попадать в аудит.', scope: 'конфигурация и продукт' }
+    },
+    queue: {
+      client: { state: 'blocked', badge: 'Недоступно', head: 'Экран скрыт за ролью', body: 'Клиент не видит очередь и данные обращений. Это не ошибка загрузки и не пустой список; это ограничение доступа.', scope: 'нет доступа' },
+      operator: { state: 'ok', badge: 'Очередь', head: 'Очередь оператора', body: 'Можно брать и закрывать свои обращения, внутренние заметки видны команде. Переназначение — отдельное право.', scope: 'назначенная очередь' },
+      admin: { state: 'ok', badge: 'Очередь + reassign', head: 'Очередь и назначение', body: 'Администратор видит очередь в scope команды и может переназначать. Закрытие и назначение должны быть атомарны и аудируемы.', scope: 'scope команды' },
+      owner: { state: 'ok', badge: 'Очередь + reassign', head: 'Полный рабочий вид', body: 'Владелец имеет тот же рабочий путь, но не обходит инварианты: одна заявка — один назначенный исполнитель, заметки не уходят клиенту.', scope: 'конфигурация и продукт' }
+    },
+    access: {
+      client: { state: 'blocked', badge: 'Недоступно', head: 'Нет доступа к ролям', body: 'Клиент не видит список ролей и не получает скрытый экран. Отказ не раскрывает существование чужих пользователей.', scope: 'нет доступа' },
+      operator: { state: 'partial', badge: 'Просмотр', head: 'Только просмотр', body: 'Оператор видит границы команды, но не может менять роли. Кнопка изменения остаётся недоступной.', scope: 'назначенная очередь' },
+      admin: { state: 'partial', badge: 'Частично', head: 'Ограниченное изменение', body: 'В политике макета администратор меняет клиентов и операторов в своём scope. Администратора может изменить только владелец.', scope: 'scope команды' },
+      owner: { state: 'ok', badge: 'Полный', head: 'Управление ролями', body: 'Владелец меняет client/operator/admin в макете. Владелец задаётся конфигом; последнего владельца понизить нельзя.', scope: 'конфигурация и продукт' }
+    },
+    danger: {
+      client: { state: 'ok', badge: 'Свой черновик', head: 'Только свой объект', body: 'Удаляется собственный черновик. Чужой объект вне scope; роль не даёт к нему доступа.', scope: 'свой черновик' },
+      operator: { state: 'ok', badge: 'Только свой объект', head: 'Роль не расширяет объект', body: 'Оператор не получает чужой черновик только потому, что он оператор. Сначала проверяются ownership и объект.', scope: 'свой черновик' },
+      admin: { state: 'ok', badge: 'Роль не обходит владение', head: 'Админский доступ не подразумевается', body: 'Даже администратор не удаляет чужой черновик по одной роли. Для этого нужны отдельное право, объект и подтверждение.', scope: 'свой черновик' },
+      owner: { state: 'ok', badge: 'Аудит обязателен', head: 'Опасное действие остаётся опасным', body: 'Владелец тоже видит последствия, подтверждает действие и оставляет аудит. В макете данные не удаляются.', scope: 'свой черновик' }
+    },
+    states: {
+      client: { state: 'ok', badge: 'Состояние', head: 'Три разных состояния', body: 'Пусто, ошибка и stale не являются отказом в правах. У каждого свой текст и путь восстановления.', scope: 'экран' },
+      operator: { state: 'ok', badge: 'Состояние', head: 'Состояние не равно праву', body: 'Ошибка загрузки не открывает очередь, а stale не повторяет действие. Роль не меняет причину состояния.', scope: 'экран' },
+      admin: { state: 'ok', badge: 'Состояние', head: 'Без админского обхода', body: 'Ошибка загрузки не даёт административного обхода; устаревшая версия требует актуального чтения объекта.', scope: 'экран' },
+      owner: { state: 'ok', badge: 'Состояние', head: 'Даже для владельца', body: 'Владелец не повторяет операцию по устаревшей кнопке. Источник истины — текущее состояние объекта, а не нажатие.', scope: 'экран' }
+    },
+    rich: {
+      client: { state: 'ok', badge: 'Публичный пост', head: 'Одинаковый контент', body: 'Пост выглядит одинаково для зрителей. CTA отправляет callback, но не даёт прав на публикацию или изменение канала.', scope: 'канал' },
+      operator: { state: 'ok', badge: 'Публичный пост', head: 'Просмотр не равен публикации', body: 'Роль зрителя не меняет контент. Подготовка и публикация — отдельные серверные права и отдельный target.', scope: 'канал' },
+      admin: { state: 'ok', badge: 'Публичный пост', head: 'Право на конкретный чат', body: 'Просмотр поста не даёт права публикации. Для канала проверяются административные права именно в этом чате.', scope: 'канал' },
+      owner: { state: 'ok', badge: 'Публичный пост', head: 'Preview не отправляет', body: 'Даже владелец публикует только через проверенный target/permission. Предпросмотр в макете не является отправкой.', scope: 'канал' }
+    }
+  };
+
+  var REQUESTS = [
+    { id: 1042, title: 'Не приходит код входа', tone: 'work', status: 'В работе', created: '26 окт, 09:14', updated: '26 окт, 10:02', date: '2026-10-26T09:14:00Z', version: 4, category: 'Доступ', description: 'Код приходит на старый номер. Смена номера ещё не подтверждена.', history: [['Создана', '26 окт, 09:14'], ['Взята в работу', '26 окт, 09:40']] },
+    { id: 1041, title: 'Не применился промокод', tone: 'done', status: 'Завершена', created: '25 окт, 18:21', updated: '26 окт, 08:50', date: '2026-10-25T18:21:00Z', version: 3, category: 'Оплата', description: 'Промокод был применён к другому аккаунту. Проверили условия и закрыли обращение.', history: [['Создана', '25 окт, 18:21'], ['Завершена', '26 окт, 08:50']] },
+    { id: 1039, title: 'Вопрос по счёту', tone: 'work', status: 'В работе', created: '25 окт, 12:03', updated: '25 окт, 16:44', date: '2026-10-25T12:03:00Z', version: 2, category: 'Оплата', description: 'Клиент просит пояснить строку в счёте. Нужна сверка с серверной записью.', history: [['Создана', '25 окт, 12:03'], ['Взята в работу', '25 окт, 12:20']] },
+    { id: 1035, title: 'Не открывается каталог', tone: 'done', status: 'Завершена', created: '24 окт, 20:12', updated: '25 окт, 10:05', date: '2026-10-24T20:12:00Z', version: 2, category: 'Доступ', description: 'Проблема была на стороне клиента; после повторного входа каталог открылся.', history: [['Создана', '24 окт, 20:12'], ['Завершена', '25 окт, 10:05']] },
+    { id: 1031, title: 'Как сменить язык?', tone: 'done', status: 'Завершена', created: '23 окт, 15:40', updated: '23 окт, 15:52', date: '2026-10-23T15:40:00Z', version: 1, category: 'Настройки', description: 'Отправили короткую инструкцию по смене языка в профиле.', history: [['Создана', '23 окт, 15:40'], ['Завершена', '23 окт, 15:52']] },
+    { id: 1028, title: 'Дублируется уведомление', tone: 'work', status: 'В работе', created: '22 окт, 11:05', updated: '24 окт, 09:17', date: '2026-10-22T11:05:00Z', version: 5, category: 'Настройки', description: 'Проверяем дедупликацию уведомлений. Клиенту показан ожидаемый статус.', history: [['Создана', '22 окт, 11:05'], ['Взята в работу', '24 окт, 09:17']] },
+    { id: 1024, title: 'Запрос на удаление данных', tone: 'done', status: 'Завершена', created: '20 окт, 09:31', updated: '21 окт, 14:08', date: '2026-10-20T09:31:00Z', version: 3, category: 'Приватность', description: 'Запрос обработан по документированной процедуре; клиент получил подтверждение.', history: [['Создана', '20 окт, 09:31'], ['Завершена', '21 окт, 14:08']] }
+  ].sort(function (left, right) {
+    return right.date.localeCompare(left.date) || right.id - left.id;
+  });
+
+  var TOPIC_LABELS = {
+    access: 'Доступ к аккаунту',
+    payment: 'Оплата',
+    other: 'Другое'
+  };
+
+  var FILTER_LABELS = {
+    all: 'Все',
+    work: 'В работе',
+    done: 'Завершены'
+  };
+
+  var initialTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+
+  var state = {
+    scene: 'menu',
+    role: 'client',
+    theme: initialTheme,
+    width: 'normal',
+    status: 'Макет открыт локально. Сеть не используется.',
+    menu: { notice: '' },
+    form: { step: 1, topic: '', details: '', error: '', resultId: null },
+    list: { filter: 'all', page: 1, openId: null },
+    settings: {
+      scope: 'personal',
+      personal: { notify: true, digest: false, quiet: 'off' },
+      workspace: { queue: true, sla: '4' },
+      savedPersonal: { notify: true, digest: false, quiet: 'off' },
+      savedWorkspace: { queue: true, sla: '4' },
+      versionPersonal: 3,
+      versionWorkspace: 7,
+      notice: ''
+    },
+    queue: {
+      filter: 'new',
+      status: 'new',
+      assignee: null,
+      reassignOpen: false,
+      reassignTo: 'operator-2',
+      notice: ''
+    },
+    access: {
+      target: '4821',
+      proposal: '',
+      stage: 'idle',
+      notice: '',
+      records: {
+        '4821': { name: 'Анна К.', label: 'Демо-профиль', role: 'client' },
+        '5310': { name: 'Илья П.', label: 'Демо-профиль', role: 'operator' },
+        '5590': { name: 'Марк С.', label: 'Демо-профиль', role: 'admin' }
+      },
+      audit: []
+    },
+    danger: { stage: 'idle', notice: '' },
+    states: { variant: 'empty', recovered: false, stale: 'idle', notice: '' },
+    rich: { notice: '', detailsOpen: false }
+  };
+
+  function canWorkspace(role) {
+    return role === 'admin' || role === 'owner';
+  }
+
+  function isManager(role) {
+    return role === 'admin' || role === 'owner';
+  }
+
+  function sceneFromHash() {
+    return window.location.hash.replace(/^#/, '');
+  }
+
+  function payloadFor(id) {
+    var node = document.getElementById('payload-' + id);
+    return node ? node.textContent.trim() : '';
+  }
+
+  function setStatus(message) {
+    state.status = message;
+    var target = $('#live-status');
+    if (target) { target.textContent = message; }
+  }
+
+  function focusByKey(key) {
+    var target = $$('[data-focus-key]').filter(function (node) {
+      return node.getAttribute('data-focus-key') === key;
+    })[0];
+    if (target && typeof target.focus === 'function') {
+      target.focus();
+    }
+  }
+
+  function focusStream() {
+    var stream = $('#chat-stream');
+    if (stream) { stream.focus(); }
+  }
+
+  function roleChip() {
+    return '<span class="scope-chip">' + esc(ROLE_INFO[state.role].label) + ' · ' + esc(ROLE_INFO[state.role].scope) + '</span>';
+  }
+
+  function noticeBlock(text) {
+    return text ? '<p class="scene-notice">' + esc(text) + '</p>' : '';
+  }
+
+  function message(inner, meta) {
+    return '<article class="msg in"><div class="msg-meta">' + esc(meta || 'Бот · демо') + '</div><div class="bubble">' + inner + '</div></article>';
+  }
+
+  function button(label, action, value, options) {
+    var settings = options || {};
+    var classes = 'kb' + (settings.className ? ' ' + settings.className : '');
+    var attributes = [
+      'type="button"',
+      'class="' + classes + '"',
+      'data-action="' + esc(action) + '"',
+      'data-value="' + esc(value || '') + '"'
+    ];
+    if (settings.focusKey) { attributes.push('data-focus-key="' + esc(settings.focusKey) + '"'); }
+    if (settings.disabled) { attributes.push('disabled'); }
+    if (settings.reasonId) { attributes.push('aria-describedby="' + esc(settings.reasonId) + '"'); }
+    return '<button ' + attributes.join(' ') + '>' + label + '</button>';
+  }
+
+  function chipButton(label, action, value, pressed, focusKey, disabled) {
+    return '<button type="button" class="chip" data-action="' + esc(action) + '" data-value="' + esc(value) + '" data-focus-key="' + esc(focusKey) + '" aria-pressed="' + (pressed ? 'true' : 'false') + '"' + (disabled ? ' disabled' : '') + '>' + label + '</button>';
+  }
+
+  function stepper(step) {
+    var bars = '';
+    for (var index = 1; index <= 3; index += 1) {
+      bars += '<span' + (index <= step ? ' class="on"' : '') + '></span>';
+    }
+    return '<div class="stepper" aria-hidden="true">' + bars + '</div>';
+  }
+
+  function statusBadge(tone, label) {
+    return '<span class="status" data-tone="' + esc(tone) + '">' + esc(label) + '</span>';
+  }
+
+  function renderMenu() {
+    var keyboard = button('Создать заявку', 'nav', 'form', { className: 'kb-primary', focusKey: 'menu-create' }) +
+      '<div class="kb-row">' +
+        button('Мои заявки', 'nav', 'list', { focusKey: 'menu-list' }) +
+        button('Настройки', 'nav', 'settings', { focusKey: 'menu-settings' }) +
+      '</div>';
+
+    var managementNote = '';
+    if (state.role === 'operator') {
+      keyboard += button('Рабочая очередь', 'nav', 'queue', { focusKey: 'menu-queue' });
+      managementNote = 'Доступ к ролям не входит в меню оператора.';
+    } else if (isManager(state.role)) {
+      keyboard += '<div class="kb-row">' +
+        button('Рабочая очередь', 'nav', 'queue', { focusKey: 'menu-queue' }) +
+        button('Доступ и роли', 'nav', 'access', { focusKey: 'menu-access' }) +
+      '</div>';
+      managementNote = 'Изменения ролей дополнительно проверяются на сервере.';
+    } else {
+      managementNote = 'Пункт «Управление» не отрисован для роли «Клиент»; серверный вход всё равно проверяется отдельно.';
+    }
+
+    return message(
+      '<div class="step-meta"><span>Меню · демо</span><span>01 / 09</span></div>' +
+      '<h3 class="bubble-title">Главное меню</h3>' +
+      '<p>Выберите раздел. Это макет: кнопки меняют только локальный экран и ничего не отправляют.</p>' +
+      '<p>' + roleChip() + '</p>' +
+      noticeBlock(state.menu.notice) +
+      '<div class="inline-keyboard">' + keyboard + '</div>' +
+      '<p class="action-reason">' +
+        ((state.role === 'client' || state.role === 'operator') ? '<span class="lockmark" aria-hidden="true"></span>' : '') +
+        esc(managementNote) +
+      '</p>'
+    ) +
+    '<p class="chat-caption">Иерархия: основное действие → личные объекты → настройки → управление. Скрытие пункта не заменяет серверную проверку.</p>';
+  }
+
+  function renderForm() {
+    var step = state.form.step;
+    var topic = TOPIC_LABELS[state.form.topic] || '';
+
+    if (step === 1) {
+      var topicButtons = '';
+      Object.keys(TOPIC_LABELS).forEach(function (key) {
+        topicButtons += button(esc(TOPIC_LABELS[key]), 'form-topic', key, {
+          focusKey: 'form-topic-' + key
+        });
+      });
+
+      return message(
+        '<div class="step-meta"><span>Заявка · шаг 1</span><span>1 / 3</span></div>' +
+        stepper(1) +
+        '<h3 class="bubble-title">Выберите тему</h3>' +
+        '<p>Короткий шаг без длинной анкеты. Следующий экран попросит описание.</p>' +
+        noticeBlock(state.form.error) +
+        (topic ? '<span class="selection">Тема: ' + esc(topic) + '</span>' : '') +
+        '<div class="inline-keyboard">' +
+          topicButtons +
+          '<div class="kb-row">' +
+            button('Назад', 'form-back', '', { focusKey: 'form-back-1' }) +
+            button('Отмена', 'form-cancel', '', { focusKey: 'form-cancel-1' }) +
+          '</div>' +
+        '</div>' +
+        '<p class="muted">Отмена завершает черновик. Данные не отправляются.</p>'
+      ) +
+      '<p class="chat-caption">В рабочем боте выбор темы — отдельный callback; текст описания приходит сообщением, а не callback-ом.</p>';
+    }
+
+    if (step === 2) {
+      var describedBy = 'form-counter form-help' + (state.form.error ? ' form-error' : '');
+      return message(
+        '<div class="step-meta"><span>Заявка · шаг 2</span><span>2 / 3</span></div>' +
+        stepper(2) +
+        '<h3 class="bubble-title">Опишите ситуацию</h3>' +
+        (topic ? '<span class="selection">Тема: ' + esc(topic) + '</span>' : '') +
+        '<p>До 160 знаков. Не присылайте пароль, код входа или токен.</p>' +
+        (state.form.error ? '<p class="field-error" role="alert" id="form-error">' + esc(state.form.error) + '</p>' : '') +
+        '<div class="inline-keyboard">' +
+          '<div class="kb-row">' +
+            button('Назад', 'form-back', '', { focusKey: 'form-back-2' }) +
+            button('Отмена', 'form-cancel', '', { focusKey: 'form-cancel-2' }) +
+          '</div>' +
+        '</div>'
+      ) +
+      '<form class="mock-composer" id="form-composer" novalidate>' +
+        '<label class="sr-only" for="form-input">Описание ситуации</label>' +
+        '<input id="form-input" name="details" type="text" maxlength="160" autocomplete="off" enterkeyhint="send" ' +
+          'placeholder="Опишите ситуацию" value="' + esc(state.form.details) + '" ' +
+          (state.form.error ? 'aria-invalid="true" ' : '') +
+          'aria-describedby="' + esc(describedBy) + '" data-focus-key="form-input">' +
+        '<button class="send-button" type="submit" aria-label="Отправить описание">→</button>' +
+      '</form>' +
+      '<div class="composer-meta"><span id="form-counter">' + state.form.details.length + ' / 160</span><span id="form-help">минимум 8 знаков · ввод экранируется</span></div>' +
+      '<p class="chat-caption">Поле ввода — часть макета. В Telegram бот получает текст обычным сообщением и обязан проверить его на сервере.</p>';
+    }
+
+    if (step === 3) {
+      return message(
+        '<div class="step-meta"><span>Заявка · шаг 3</span><span>3 / 3</span></div>' +
+        stepper(3) +
+        '<h3 class="bubble-title">Проверьте перед отправкой</h3>' +
+        '<p>Предпросмотр не создаёт заявку. Подтверждение — отдельное действие.</p>' +
+        '<dl class="summary-grid">' +
+          '<div><dt>Тема</dt><dd>' + esc(topic) + '</dd></div>' +
+          '<div><dt>Описание</dt><dd>' + esc(state.form.details) + '</dd></div>' +
+          '<div><dt>Получатель</dt><dd>Поддержка · иллюстративно</dd></div>' +
+        '</dl>' +
+        '<div class="inline-keyboard">' +
+          button('Подтвердить заявку', 'form-confirm', '', { className: 'kb-primary', focusKey: 'form-confirm' }) +
+          '<div class="kb-row">' +
+            button('Назад', 'form-back', '', { focusKey: 'form-back-3' }) +
+            button('Отмена', 'form-cancel', '', { focusKey: 'form-cancel-3' }) +
+          '</div>' +
+        '</div>' +
+        '<p class="muted">Назад сохранит ввод. Отмена завершит черновик без операции.</p>'
+      ) +
+      '<p class="chat-caption">Весь введённый текст выводится как текст, а не как HTML. В рабочем боте commit должен быть транзакционным.</p>';
+    }
+
+    return message(
+      '<div class="result-card">' +
+        '<span class="result-mark" aria-hidden="true">✓</span>' +
+        '<span class="tag green">Результат макета</span>' +
+        '<h3 id="form-result-heading" tabindex="-1" data-focus-key="form-result">Заявка № ' + esc(state.form.resultId || 5127) + '</h3>' +
+        '<p>Форма завершена. В рабочем боте здесь была бы запись в БД, номер из сервера и статус из актуального состояния.</p>' +
+      '</div>' +
+      '<div class="inline-keyboard">' +
+        button('Мои заявки', 'nav', 'list', { className: 'kb-primary', focusKey: 'form-result-list' }) +
+        '<div class="kb-row">' +
+          button('Новая заявка', 'form-reset', '', { focusKey: 'form-result-reset' }) +
+          button('В меню', 'nav', 'menu', { focusKey: 'form-result-menu' }) +
+        '</div>' +
+      '</div>' +
+      '<p class="muted">Реальные данные не записывались. Это только экран результата.</p>',
+      'Бот · результат'
+    );
+  }
+
+  function surfaceMessage(inner, meta) {
+    return '<article class="msg in"><div class="msg-meta">' + esc(meta || 'Бот · демо') + '</div><div class="surface">' + inner + '</div></article>';
+  }
+
+  function renderListDetail(request) {
+    var history = request.history.map(function (entry) {
+      return '<li><strong>' + esc(entry[0]) + '</strong><br>' + esc(entry[1]) + '</li>';
+    }).join('');
+
+    return surfaceMessage(
+      '<div class="panel-actions">' +
+        button('← К списку', 'list-back', '', { focusKey: 'list-back' }) +
+      '</div>' +
+      '<div class="panel-head">' +
+        '<div><span class="eyebrow">Свой объект · демо</span><h3 id="list-detail-heading" tabindex="-1" data-focus-key="list-detail-heading">Заявка № ' + esc(request.id) + '</h3></div>' +
+        statusBadge(request.tone, request.status) +
+      '</div>' +
+      '<dl class="detail-grid">' +
+        '<div><dt>Категория</dt><dd>' + esc(request.category) + '</dd></div>' +
+        '<div><dt>Версия</dt><dd>v' + esc(request.version) + ' · иллюстративно</dd></div>' +
+        '<div><dt>Создана</dt><dd>' + esc(request.created) + '</dd></div>' +
+        '<div><dt>Обновлена</dt><dd>' + esc(request.updated) + '</dd></div>' +
+      '</dl>' +
+      '<p class="detail-description">' + esc(request.description) + '</p>' +
+      '<ol class="timeline" aria-label="История заявки">' + history + '</ol>' +
+      '<div class="panel-actions">' +
+        button('← К списку', 'list-back', '', { className: 'kb-primary', focusKey: 'list-back-primary' }) +
+        button('В меню', 'nav', 'menu', { focusKey: 'list-detail-menu' }) +
+      '</div>' +
+      '<p class="chat-caption">Карточка показывает только ваш объект. В рабочем боте доступ и версия перепроверяются при каждом действии.</p>'
+    );
+  }
+
+  function renderList() {
+    if (state.list.openId !== null) {
+      var openRequest = REQUESTS.filter(function (item) { return item.id === state.list.openId; })[0];
+      if (openRequest) { return renderListDetail(openRequest); }
+      state.list.openId = null;
+    }
+
+    var counts = {
+      all: REQUESTS.length,
+      work: REQUESTS.filter(function (item) { return item.tone === 'work'; }).length,
+      done: REQUESTS.filter(function (item) { return item.tone === 'done'; }).length
+    };
+    var items = REQUESTS.filter(function (item) {
+      return state.list.filter === 'all' || item.tone === state.list.filter;
+    });
+    var pages = Math.max(1, Math.ceil(items.length / 3));
+    var page = Math.min(Math.max(1, state.list.page), pages);
+    state.list.page = page;
+    var pageItems = items.slice((page - 1) * 3, page * 3);
+
+    var filters = '';
+    ['all', 'work', 'done'].forEach(function (value) {
+      filters += chipButton(esc(FILTER_LABELS[value]) + ' · ' + counts[value], 'list-filter', value, state.list.filter === value, 'list-filter-' + value);
+    });
+
+    var cards = pageItems.map(function (request) {
+      return '<li><button type="button" class="request-card" data-action="list-open" data-value="' + esc(request.id) + '" data-focus-key="list-open-' + esc(request.id) + '">' +
+        '<span class="req-main"><span class="req-title">' + esc(request.title) + '</span><span class="req-meta">№ ' + esc(request.id) + ' · ' + esc(request.updated) + '</span></span>' +
+        statusBadge(request.tone, request.status) +
+        '<span class="req-arrow" aria-hidden="true">→</span>' +
+      '</button></li>';
+    }).join('');
+
+    if (!cards) {
+      cards = '<li><div class="empty-panel"><span class="empty-mark" aria-hidden="true">—</span><h3>В этом фильтре пусто</h3><p>Сбросьте фильтр или создайте новую заявку.</p><div class="panel-actions"><button type="button" class="kb" data-action="list-filter" data-value="all" data-focus-key="list-filter-reset">Показать все</button></div></div></li>';
+    }
+
+    var pagination = '<div class="pagination" role="group" aria-label="Страницы заявок">' +
+      button('← Назад', 'list-page', 'prev', { className: 'pager-btn', disabled: page <= 1, focusKey: 'list-page-prev' }) +
+      '<span class="page-label">Стр. ' + page + ' из ' + pages + '</span>' +
+      button('Далее →', 'list-page', 'next', { className: 'pager-btn', disabled: page >= pages, focusKey: 'list-page-next' }) +
+    '</div>';
+
+    var scopeCaption = state.role === 'client'
+      ? 'Личный список: только свои заявки; страницы не расширяют выборку.'
+      : 'Личный список не заменяет рабочую очередь и не смешивает scope.';
+
+    return surfaceMessage(
+      '<div class="panel-head">' +
+        '<div><span class="eyebrow">Личный список · демо</span><h3 id="list-heading" tabindex="-1" data-focus-key="list-heading">Мои заявки</h3></div>' +
+        roleChip() +
+      '</div>' +
+      '<div class="filter-row" role="group" aria-label="Фильтр заявок">' + filters + '</div>' +
+      '<ul class="request-list">' + cards + '</ul>' +
+      pagination +
+      '<p class="list-count">' + items.length + ' ' + recordsWord(items.length) + ' · стабильная сортировка по дате и id</p>' +
+      '<p class="chat-caption">' + esc(scopeCaption) + '</p>'
+    );
+  }
+
+  function switchRow(options) {
+    var describedParts = [options.descriptionId];
+    if (options.reason && options.reasonId) { describedParts.push(options.reasonId); }
+    var described = describedParts.filter(Boolean).join(' ');
+    var reason = options.reason
+      ? '<p class="action-reason" id="' + esc(options.reasonId) + '"><span class="lockmark" aria-hidden="true"></span>' + esc(options.reason) + '</p>'
+      : '';
+    return '<div class="setting-row">' +
+      '<div class="setting-copy">' +
+        '<span class="setting-label" id="' + esc(options.descriptionId) + '-label">' + esc(options.label) + '</span>' +
+        '<p id="' + esc(options.descriptionId) + '">' + esc(options.description) + '</p>' +
+        reason +
+      '</div>' +
+      '<div class="switch-wrap">' +
+        '<span class="switch-state">' + (options.checked ? 'Вкл' : 'Выкл') + '</span>' +
+        '<label class="switch">' +
+          '<input id="' + esc(options.id) + '" type="checkbox" role="switch" data-action="settings-toggle" data-scope="' + esc(options.scope) + '" data-key="' + esc(options.key) + '" data-focus-key="settings-toggle-' + esc(options.key) + '"' +
+            (options.checked ? ' checked' : '') + (options.disabled ? ' disabled' : '') +
+            ' aria-labelledby="' + esc(options.descriptionId) + '-label" aria-describedby="' + esc(described) + '">' +
+          '<span class="track" aria-hidden="true"></span>' +
+        '</label>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderSettings() {
+    var scope = state.settings.scope;
+    if (scope === 'workspace' && !canWorkspace(state.role)) { scope = 'personal'; }
+    var personalDirty = !sameObject(state.settings.personal, state.settings.savedPersonal);
+    var workspaceDirty = !sameObject(state.settings.workspace, state.settings.savedWorkspace);
+    var dirty = scope === 'personal' ? personalDirty : workspaceDirty;
+
+    var workspaceTab = chipButton('Рабочие', 'settings-scope', 'workspace', scope === 'workspace', 'settings-scope-workspace', !canWorkspace(state.role));
+    var personalTab = chipButton('Личные', 'settings-scope', 'personal', scope === 'personal', 'settings-scope-personal');
+    var scopeNote = canWorkspace(state.role)
+      ? 'Рабочие настройки — отдельная область и отдельная серверная проверка.'
+      : 'Рабочие настройки недоступны этой роли; вкладка показывает только границу, а не скрытый доступ.';
+
+    var content = '';
+    if (scope === 'personal') {
+      var digestDisabled = !state.settings.personal.notify;
+      content = '<div class="setting-group">' +
+        '<div class="setting-group-head"><h4>Личные</h4><span class="version-chip">v' + esc(state.settings.versionPersonal) + '</span></div>' +
+        switchRow({
+          id: 'set-personal-notify', scope: 'personal', key: 'notify', checked: state.settings.personal.notify,
+          label: 'Уведомления о статусе', description: 'Сообщения о смене статуса ваших заявок.',
+          descriptionId: 'set-notify-desc'
+        }) +
+        switchRow({
+          id: 'set-personal-digest', scope: 'personal', key: 'digest', checked: state.settings.personal.digest,
+          label: 'Ежедневная сводка', description: 'Одно короткое сообщение в день вместо серии уведомлений.',
+          descriptionId: 'set-digest-desc', disabled: digestDisabled,
+          reason: digestDisabled ? 'Сначала включите уведомления о статусе.' : '', reasonId: 'set-digest-reason'
+        }) +
+        '<div class="setting-row">' +
+          '<div class="setting-copy"><label for="set-personal-quiet">Тихие часы</label><p>Время без уведомлений; пояс и доставка проверяются сервером.</p></div>' +
+          '<select id="set-personal-quiet" class="mock-select" data-action="settings-select" data-scope="personal" data-key="quiet" data-focus-key="settings-select-quiet">' +
+            '<option value="off"' + (state.settings.personal.quiet === 'off' ? ' selected' : '') + '>Не включать</option>' +
+            '<option value="22-08"' + (state.settings.personal.quiet === '22-08' ? ' selected' : '') + '>22:00–08:00</option>' +
+            '<option value="23-07"' + (state.settings.personal.quiet === '23-07' ? ' selected' : '') + '>23:00–07:00</option>' +
+          '</select>' +
+        '</div>' +
+      '</div>';
+    } else {
+      content = '<div class="setting-group">' +
+        '<div class="setting-group-head"><h4>Рабочие · команда</h4><span class="version-chip">v' + esc(state.settings.versionWorkspace) + '</span></div>' +
+        switchRow({
+          id: 'set-workspace-queue', scope: 'workspace', key: 'queue', checked: state.settings.workspace.queue,
+          label: 'Принимать новые обращения', description: 'Рабочая настройка команды; клиентский экран от неё не зависит.',
+          descriptionId: 'set-queue-desc'
+        }) +
+        '<div class="setting-row">' +
+          '<div class="setting-copy"><label for="set-workspace-sla">SLA ответа</label><p>Ориентир для очереди, не обещание клиенту без проверки правил.</p></div>' +
+          '<select id="set-workspace-sla" class="mock-select" data-action="settings-select" data-scope="workspace" data-key="sla" data-focus-key="settings-select-sla">' +
+            '<option value="2"' + (state.settings.workspace.sla === '2' ? ' selected' : '') + '>2 ч</option>' +
+            '<option value="4"' + (state.settings.workspace.sla === '4' ? ' selected' : '') + '>4 ч</option>' +
+            '<option value="8"' + (state.settings.workspace.sla === '8' ? ' selected' : '') + '>8 ч</option>' +
+          '</select>' +
+        '</div>' +
+      '</div>';
+    }
+
+    return surfaceMessage(
+      '<div class="panel-head">' +
+        '<div><span class="eyebrow">Экран настроек · демо</span><h3>Настройки</h3></div>' +
+        roleChip() +
+      '</div>' +
+      noticeBlock(state.settings.notice) +
+      '<div class="scope-switch" role="group" aria-label="Область настроек">' + personalTab + workspaceTab + '</div>' +
+      '<p class="policy-note scope-reason">' + esc(scopeNote) + '</p>' +
+      content +
+      '<div class="settings-actions">' +
+        button('Сохранить', 'settings-save', '', { className: 'kb-primary', disabled: !dirty, focusKey: 'settings-save' }) +
+        button('Отменить', 'settings-cancel', '', { disabled: !dirty, focusKey: 'settings-cancel' }) +
+      '</div>' +
+      '<p class="dirty-state" id="settings-status" tabindex="-1" data-focus-key="settings-status">' +
+        (dirty ? '<strong>Есть несохранённые изменения.</strong> Сохранение отдельным действием.' : 'Нет изменений. Сохранение недоступно.') +
+      '</p>' +
+      '<p class="chat-caption">Секреты и токены в этом экране не выводятся. Сохранение меняет только состояние макета.</p>'
+    );
+  }
+
+  function renderQueueRestricted() {
+    return surfaceMessage(
+      '<div class="panel-head">' +
+        '<div><span class="eyebrow">Команда · демо</span><h3>Очередь поддержки</h3></div>' +
+        roleChip() +
+      '</div>' +
+      '<div class="locked-panel">' +
+        '<span class="tag">Ограничено ролью</span>' +
+        '<h3>Очередь недоступна этой роли</h3>' +
+        '<p>Это не ошибка загрузки и не пустой список. Экран видят оператор, администратор и владелец в своём scope. Макет не проверяет доступ по-настоящему.</p>' +
+        '<div class="panel-actions">' +
+          button('Мои заявки', 'nav', 'list', { className: 'kb-primary', focusKey: 'queue-restricted-list' }) +
+          button('В меню', 'nav', 'menu', { focusKey: 'queue-restricted-menu' }) +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function renderQueue() {
+    if (state.role === 'client') { return renderQueueRestricted(); }
+
+    var manager = isManager(state.role);
+    var counts = {
+      new: state.queue.status === 'new' ? 1 : 0,
+      mine: state.queue.assignee === 'viewer' ? 1 : 0,
+      all: 1
+    };
+    var filters = '';
+    [['new', 'Новые'], ['mine', 'Мои'], ['all', 'Все']].forEach(function (entry) {
+      filters += chipButton(esc(entry[1]) + ' · ' + counts[entry[0]], 'queue-filter', entry[0], state.queue.filter === entry[0], 'queue-filter-' + entry[0]);
+    });
+
+    var visible = state.queue.filter === 'all' ||
+      (state.queue.filter === 'new' && state.queue.status === 'new') ||
+      (state.queue.filter === 'mine' && state.queue.assignee === 'viewer');
+
+    var empty = '<div class="empty-panel">' +
+      '<span class="empty-mark" aria-hidden="true">—</span>' +
+      '<h3>В этом фильтре пусто</h3>' +
+      '<p>' + (state.queue.filter === 'mine' ? 'У вас пока нет назначенных обращений.' : 'Новых обращений сейчас нет.') + '</p>' +
+      '<div class="panel-actions"><button type="button" class="kb" data-action="queue-filter" data-value="all" data-focus-key="queue-show-all">Показать все</button></div>' +
+    '</div>';
+
+    var ticket = '';
+    if (visible) {
+      var assigneeName = state.queue.assignee === 'viewer'
+        ? 'Вы · демо'
+        : (state.queue.assignee === 'operator-2' ? 'Оператор 2 · демо' : 'Не назначено');
+      var statusLabel = state.queue.status === 'new' ? 'Новая' : (state.queue.status === 'working' ? 'В работе' : 'Закрыта');
+      var statusTone = state.queue.status === 'new' ? 'warn' : (state.queue.status === 'working' ? 'work' : 'done');
+      var actionMarkup = '';
+      var reasonMarkup = '';
+
+      if (state.queue.status === 'new') {
+        actionMarkup += button('Взять в работу', 'queue-take', '', { className: 'kb-primary', focusKey: 'queue-take' });
+      } else if (state.queue.status === 'working') {
+        var canClose = state.queue.assignee === 'viewer' || manager;
+        actionMarkup += button('Закрыть обращение', 'queue-close', '', { disabled: !canClose, focusKey: 'queue-close', reasonId: !canClose ? 'queue-action-reason' : '' });
+        var canReturn = state.queue.assignee === 'viewer' || manager;
+        actionMarkup += button('Вернуть в очередь', 'queue-return', '', { disabled: !canReturn, focusKey: 'queue-return' });
+        if (manager) {
+          actionMarkup += button('Переназначить', 'queue-reassign-open', '', { focusKey: 'queue-reassign-open' });
+        } else {
+          actionMarkup += button('Переназначить', 'queue-reassign-open', '', { disabled: true, focusKey: 'queue-reassign-disabled', reasonId: 'queue-action-reason' });
+          reasonMarkup = '<p class="action-reason" id="queue-action-reason"><span class="lockmark" aria-hidden="true"></span>' +
+            (!canClose ? 'Обращение назначено другому оператору. ' : '') +
+            'Переназначение доступно администратору или владельцу.</p>';
+        }
+      } else {
+        var canReopen = state.queue.assignee === 'viewer' || manager;
+        actionMarkup += button('Переоткрыть', 'queue-reopen', '', { className: 'kb-primary', disabled: !canReopen, focusKey: 'queue-reopen', reasonId: !canReopen ? 'queue-action-reason' : '' });
+        if (!canReopen) {
+          reasonMarkup = '<p class="action-reason" id="queue-action-reason"><span class="lockmark" aria-hidden="true"></span>Обращение назначено другому оператору; переоткрытие доступно администратору или владельцу.</p>';
+        }
+        if (manager) {
+          actionMarkup += button('Вернуть в очередь', 'queue-return', '', { focusKey: 'queue-return' });
+        }
+      }
+
+      var reassign = '';
+      if (manager && state.queue.reassignOpen) {
+        reassign = '<div class="reassign">' +
+          '<label for="queue-reassign">Назначить оператора</label>' +
+          '<select id="queue-reassign" class="mock-select" data-action="queue-reassign-target" data-focus-key="queue-reassign-select">' +
+            '<option value="operator-2"' + (state.queue.reassignTo === 'operator-2' ? ' selected' : '') + '>Оператор 2 · демо</option>' +
+            '<option value="operator-3"' + (state.queue.reassignTo === 'operator-3' ? ' selected' : '') + '>Оператор 3 · демо</option>' +
+          '</select>' +
+          '<div class="reassign-actions">' +
+            button('Назначить', 'queue-reassign-apply', '', { className: 'kb-primary', focusKey: 'queue-reassign-apply' }) +
+            button('Отмена', 'queue-reassign-cancel', '', { focusKey: 'queue-reassign-cancel' }) +
+          '</div>' +
+        '</div>';
+      }
+
+      ticket = '<div class="ticket">' +
+        '<div class="ticket-head">' +
+          '<div><h4 id="queue-heading" tabindex="-1" data-focus-key="queue-heading">Не приходит код входа</h4>' +
+            '<div class="ticket-meta"><span>№ 1042</span><span>Анна К. · демо</span><span>12 мин</span></div>' +
+          '</div>' +
+          statusBadge(statusTone, statusLabel) +
+        '</div>' +
+        '<div class="ticket-body">' +
+          '<p>Тема: доступ · исполнитель: ' + esc(assigneeName) + ' · версия: ' + (state.queue.status === 'new' ? '2' : '3') + '</p>' +
+          '<div class="internal-note">' +
+            '<div class="note-head"><span class="tag">Внутренняя заметка</span><span class="privacy-note">клиенту не отправляется</span></div>' +
+            '<p>Проверила вход: код уходит на старый номер. Нужна сверка с клиентом.</p>' +
+            '<p class="note-meta">Оператор · 10:12 · видно команде</p>' +
+          '</div>' +
+          '<div class="inline-keyboard">' + actionMarkup + '</div>' +
+          reassign +
+          reasonMarkup +
+          '<p class="chat-caption">Назначение и закрытие должны быть атомарными. В макете действия меняют только этот экран.</p>' +
+        '</div>' +
+      '</div>';
+    }
+
+    return surfaceMessage(
+      '<div class="panel-head">' +
+        '<div><span class="eyebrow">Очередь · демо</span><h3>Очередь поддержки</h3></div>' +
+        roleChip() +
+      '</div>' +
+      noticeBlock(state.queue.notice) +
+      '<div class="filter-row" role="group" aria-label="Фильтр очереди">' + filters + '</div>' +
+      (visible ? ticket : empty) +
+      '<p class="chat-caption">Внутренние заметки не попадают в клиентский ответ. Переназначение — отдельное право, а не следствие видимой кнопки.</p>'
+    );
+  }
+
+  function renderAccessRestricted() {
+    return surfaceMessage(
+      '<div class="panel-head">' +
+        '<div><span class="eyebrow">Права · демо</span><h3>Доступ и роли</h3></div>' +
+        roleChip() +
+      '</div>' +
+      '<div class="locked-panel">' +
+        '<span class="tag">Ограничено ролью</span>' +
+        '<h3>Нет доступа к управлению ролями</h3>' +
+        '<p>Клиент не видит список ролей и не получает скрытый экран. Это ограничение доступа, а не ошибка сети. В рабочем боте отказ приходит без чужих данных.</p>' +
+        '<div class="panel-actions">' +
+          button('Мои заявки', 'nav', 'list', { className: 'kb-primary', focusKey: 'access-restricted-list' }) +
+          button('В меню', 'nav', 'menu', { focusKey: 'access-restricted-menu' }) +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function accessRoleOptions(selected, viewerRole) {
+    var html = '';
+    ['client', 'operator', 'admin'].forEach(function (role) {
+      var disabled = role === 'admin' && viewerRole === 'admin';
+      var label = ROLE_INFO[role].label + (disabled ? ' — только владелец' : '');
+      html += '<option value="' + role + '"' + (selected === role ? ' selected' : '') + (disabled ? ' disabled' : '') + '>' + esc(label) + '</option>';
+    });
+    return html;
+  }
+
+  function renderAccess() {
+    if (state.role === 'client') { return renderAccessRestricted(); }
+
+    var viewer = state.role;
+    var canEdit = viewer === 'admin' || viewer === 'owner';
+    var record = state.access.records[state.access.target];
+    var currentRole = record.role;
+    var proposal = state.access.proposal;
+    if (['client', 'operator', 'admin'].indexOf(proposal) === -1) { proposal = currentRole; }
+    var targetBlocked = viewer === 'admin' && currentRole === 'admin';
+    var controlsDisabled = !canEdit || targetBlocked;
+    var unchanged = proposal === currentRole;
+    var reviewDisabled = controlsDisabled || unchanged;
+
+    var targetOptions = Object.keys(state.access.records).map(function (id) {
+      var item = state.access.records[id];
+      return '<option value="' + esc(id) + '"' + (state.access.target === id ? ' selected' : '') + '>' + esc(item.name) + ' · ' + esc(item.label) + '</option>';
+    }).join('');
+
+    var reviewReason = '';
+    if (!canEdit) {
+      reviewReason = 'Просмотр. Изменение ролей недоступно этой роли.';
+    } else if (targetBlocked) {
+      reviewReason = 'Администратора может изменить только владелец.';
+    } else if (unchanged) {
+      reviewReason = 'Роль не изменилась.';
+    }
+
+    var policy = viewer === 'operator'
+      ? 'Политика макета: оператор видит роли, но не меняет их.'
+      : (viewer === 'admin'
+        ? 'Политика макета: администратор меняет клиентов и операторов; администратора — только владелец.'
+        : 'Политика макета: владелец меняет client/operator/admin. Владелец задаётся конфигом и не назначается этим экраном.');
+
+    var confirmPanel = '';
+    if (state.access.stage === 'confirm') {
+      confirmPanel = '<div class="confirm-panel" role="alertdialog" aria-labelledby="access-confirm-title" aria-describedby="access-confirm-desc" tabindex="-1" data-focus-key="access-confirm">' +
+        '<span class="tag blue">Подтверждение</span>' +
+        '<h3 id="access-confirm-title">Изменить роль?</h3>' +
+        '<p id="access-confirm-desc">' + esc(record.name) + ': ' + esc(ROLE_INFO[currentRole].label) + ' → ' + esc(ROLE_INFO[proposal].label) + '.</p>' +
+        '<ul class="consequences">' +
+          '<li>Новая роль начнёт действовать при следующей серверной проверке.</li>' +
+          '<li>Уже отправленные кнопки должны быть перепроверены; видимость не даёт прав.</li>' +
+          '<li>В рабочем боте изменение и аудит выполняются в одной транзакции.</li>' +
+          '<li>Макет: запись и аудит локальные, данные не сохраняются.</li>' +
+        '</ul>' +
+        '<div class="confirm-actions">' +
+          button('Подтвердить изменение', 'access-confirm', '', { className: 'kb-primary', focusKey: 'access-confirm-apply' }) +
+          button('Отмена', 'access-cancel', '', { focusKey: 'access-confirm-cancel' }) +
+        '</div>' +
+      '</div>';
+    }
+
+    var audit = state.access.audit.length
+      ? '<ul class="audit-list">' + state.access.audit.map(function (entry) {
+          return '<li><strong>' + esc(entry.name) + '</strong> · ' + esc(entry.from) + ' → ' + esc(entry.to) + '<br>' + esc(entry.time) + ' · макет</li>';
+        }).join('') + '</ul>'
+      : '<p class="audit-empty">Журнал пуст. Изменения этого макета появятся здесь.</p>';
+
+    return surfaceMessage(
+      '<div class="panel-head">' +
+        '<div><span class="eyebrow">Права · демо</span><h3>Доступ и роли</h3></div>' +
+        roleChip() +
+      '</div>' +
+      noticeBlock(state.access.notice) +
+      '<div class="access-person">' +
+        '<label for="access-target">Пользователь · демо</label>' +
+        '<select id="access-target" class="mock-select" data-action="access-target" data-focus-key="access-target-select">' + targetOptions + '</select>' +
+      '</div>' +
+      '<div class="person-line">' +
+        '<div><strong>' + esc(record.name) + '</strong><small>ID ' + esc(state.access.target) + ' · ' + esc(record.label) + '</small></div>' +
+        statusBadge('work', ROLE_INFO[currentRole].label) +
+      '</div>' +
+      '<div class="access-form">' +
+        '<label class="access-role-label" for="access-role">Новая роль в scope макета</label>' +
+        '<select id="access-role" class="mock-select" data-action="access-role" data-focus-key="access-role-select"' + (controlsDisabled ? ' disabled' : '') + '>' +
+          accessRoleOptions(proposal, viewer) +
+          '<option value="" disabled>Владелец — задаётся конфигом</option>' +
+        '</select>' +
+      '</div>' +
+      '<p class="policy-note">' + esc(policy) + '</p>' +
+      (reviewReason ? '<p class="action-reason" id="access-review-reason"><span class="lockmark" aria-hidden="true"></span>' + esc(reviewReason) + '</p>' : '') +
+      '<div class="panel-actions">' +
+        button('Проверить изменение', 'access-review', '', {
+          className: 'kb-primary',
+          disabled: reviewDisabled,
+          focusKey: 'access-review',
+          reasonId: reviewReason ? 'access-review-reason' : ''
+        }) +
+        button('В меню', 'nav', 'menu', { focusKey: 'access-menu' }) +
+      '</div>' +
+      confirmPanel +
+      '<div class="audit" id="access-audit" tabindex="-1" data-focus-key="access-audit">' +
+        '<div class="audit-head"><span>Журнал макета</span><span>локально</span></div>' +
+        audit +
+      '</div>' +
+      '<p class="safety-note">Владелец задаётся доверенной конфигурацией; последнего владельца нельзя понизить. Отзыв роли должен влиять на уже отправленные кнопки. Это иллюстративный RBAC, не проверка доступа.</p>' +
+      '<p class="chat-caption">Изменение роли не выполняется в этом HTML. В рабочем боте нужны actor, target, scope, версия и аудит в одной транзакции.</p>'
+    );
+  }
+
+  function renderDanger() {
+    var header = '<div class="panel-head">' +
+      '<div><span class="eyebrow">Мой объект · демо</span><h3>Опасное действие</h3></div>' +
+      roleChip() +
+    '</div>';
+
+    if (state.danger.stage === 'confirm') {
+      return surfaceMessage(
+        header +
+        noticeBlock(state.danger.notice) +
+        '<div class="confirm-panel danger" role="alertdialog" aria-labelledby="danger-confirm-title" aria-describedby="danger-confirm-desc" tabindex="-1" data-focus-key="danger-confirm">' +
+          '<span class="tag red">Необратимо</span>' +
+          '<h3 id="danger-confirm-title">Удалить черновик № 4821?</h3>' +
+          '<p id="danger-confirm-desc">Черновик «Вопрос по счёту» будет удалён. Отмена вернёт карточку без изменений.</p>' +
+          '<ul class="consequences">' +
+            '<li><strong>Текст черновика исчезнет</strong> из вашего списка.</li>' +
+            '<li>Связь с историей и вложениями не сохраняется.</li>' +
+            '<li>Восстановления из корзины в этом сценарии нет.</li>' +
+            '<li>Макет: реальные данные не изменяются.</li>' +
+          '</ul>' +
+          '<div class="confirm-actions">' +
+            button('Удалить безвозвратно', 'danger-confirm', '', { className: 'kb-danger-solid', focusKey: 'danger-confirm-apply' }) +
+            button('Оставить черновик', 'danger-cancel', '', { focusKey: 'danger-confirm-cancel' }) +
+          '</div>' +
+        '</div>' +
+        '<p class="chat-caption">В рабочем боте подтверждение привязано к actor, объекту, версии и сроку. Повтор не удаляет второй раз.</p>'
+      );
+    }
+
+    if (state.danger.stage === 'deleted') {
+      return surfaceMessage(
+        header +
+        noticeBlock(state.danger.notice) +
+        '<div class="tombstone" tabindex="-1" data-focus-key="danger-tombstone">' +
+          '<span class="tag">Локальный результат</span>' +
+          '<h3>Черновик удалён в макете</h3>' +
+          '<p>В рабочем боте здесь был бы tombstone и запись аудита. Реальные данные не удалялись.</p>' +
+        '</div>' +
+        '<div class="panel-actions">' +
+          button('Восстановить демо', 'danger-reset', '', { className: 'kb-primary', focusKey: 'danger-reset' }) +
+          button('В меню', 'nav', 'menu', { focusKey: 'danger-menu' }) +
+        '</div>'
+      );
+    }
+
+    return surfaceMessage(
+      header +
+      noticeBlock(state.danger.notice) +
+      '<div class="detail-head">' +
+        '<div><span class="tag red">Необратимо</span><h3>Черновик № 4821</h3><span class="detail-id">мой объект · версия 3</span></div>' +
+        statusBadge('warn', 'Черновик') +
+      '</div>' +
+      '<p class="detail-description">Вопрос по счёту. Удаление затронет только этот черновик; заявка № 1042 и история не меняются.</p>' +
+      '<div class="inline-keyboard">' +
+        button('Удалить черновик', 'danger-start', '', { className: 'kb-danger', focusKey: 'danger-start' }) +
+        button('В меню', 'nav', 'menu', { focusKey: 'danger-menu' }) +
+      '</div>' +
+      '<p class="chat-caption">Обычное действие слева от границы, необратимое — за отдельным подтверждением. Роль не заменяет владение объектом.</p>'
+    );
+  }
+
+  function staleTicket(updated) {
+    var badge = updated ? statusBadge('work', 'В работе') : statusBadge('warn', 'Ожидает');
+    return '<div class="stale-card">' +
+      '<div class="detail-head">' +
+        '<div><h3>Заявка № 1042</h3><span class="detail-id">' + (updated ? 'актуальная версия 4' : 'версия из старого сообщения 2') + '</span></div>' +
+        badge +
+      '</div>' +
+      '<p class="detail-description">Не приходит код входа. ' + (updated ? 'Статус уже изменён другим действием.' : 'Кнопка была отправлена до смены статуса.') + '</p>' +
+      (updated ? '' :
+        '<div class="inline-keyboard">' +
+          button('Подтвердить', 'states-confirm', '', { className: 'kb-primary', focusKey: 'states-confirm' }) +
+          button('Обновить карточку', 'states-refresh', '', { focusKey: 'states-refresh' }) +
+        '</div>'
+      ) +
+    '</div>';
+  }
+
+  function renderStates() {
+    var tabs = chipButton('Пусто', 'states-variant', 'empty', state.states.variant === 'empty', 'states-tab-empty') +
+      chipButton('Ошибка', 'states-variant', 'error', state.states.variant === 'error', 'states-tab-error') +
+      chipButton('Stale', 'states-variant', 'stale', state.states.variant === 'stale', 'states-tab-stale');
+
+    var content = '';
+    if (state.states.variant === 'empty') {
+      content = '<div class="empty-panel">' +
+        '<span class="empty-mark" aria-hidden="true">—</span>' +
+        '<span class="tag">Пусто</span>' +
+        '<h3>Заявок пока нет</h3>' +
+        '<p>Пустой список — не ошибка. Предложите первый полезный шаг, а не только «Обновить».</p>' +
+        '<div class="panel-actions">' +
+          button('Создать заявку', 'nav', 'form', { className: 'kb-primary', focusKey: 'states-create' }) +
+          button('В меню', 'nav', 'menu', { focusKey: 'states-menu-empty' }) +
+        '</div>' +
+      '</div>';
+    } else if (state.states.variant === 'error') {
+      if (state.states.recovered) {
+        content = '<div class="result-card">' +
+          '<span class="result-mark" aria-hidden="true">✓</span>' +
+          '<span class="tag green">Восстановлено · макет</span>' +
+          '<h3 id="states-status" tabindex="-1" data-focus-key="states-status">Данные получены</h3>' +
+          '<p>Повторная попытка — локальная демонстрация. Сетевой запрос не выполнялся, задержка не проверялась.</p>' +
+        '</div>' + staleTicket(true) +
+        '<div class="panel-actions">' +
+          button('Открыть список', 'nav', 'list', { className: 'kb-primary', focusKey: 'states-open-list' }) +
+          button('Сбросить', 'states-reset', '', { focusKey: 'states-reset' }) +
+        '</div>';
+      } else {
+        content = '<div class="error-panel">' +
+          '<span class="tag red">Ошибка загрузки</span>' +
+          '<h3 id="states-status" tabindex="-1" data-focus-key="states-status">Не удалось загрузить заявки</h3>' +
+          '<p>Сервис не ответил. В рабочем боте здесь была бы сетевая ошибка или 5xx, но не отказ в правах. Запрос в макете не выполнялся.</p>' +
+          '<div class="panel-actions">' +
+            button('Повторить', 'states-retry', '', { className: 'kb-primary', focusKey: 'states-retry' }) +
+            button('В меню', 'nav', 'menu', { focusKey: 'states-menu-error' }) +
+          '</div>' +
+        '</div>' +
+        '<p class="policy-note">Повторная попытка не должна маскировать 403 или пустой результат. Сначала определяется причина.</p>';
+      }
+    } else {
+      if (state.states.stale === 'idle') {
+        content = '<div class="stale-panel">' +
+          '<span class="tag">Stale · не ошибка</span>' +
+          '<h3 id="states-status" tabindex="-1" data-focus-key="states-status">Карточка из старого сообщения</h3>' +
+          '<p>Нажатие относится к версии 2, но у сервера уже версия 4. Здесь нельзя повторять переход; нужно показать конфликт и актуальную карточку.</p>' +
+          staleTicket(false) +
+          '<p class="policy-note">Кнопка остаётся в старом сообщении. Убрать её из нового экрана полезно, но серверная проверка версии всё равно обязательна.</p>' +
+        '</div>';
+      } else {
+        var refreshed = state.states.stale === 'refreshed';
+        content = '<div class="conflict-panel">' +
+          '<span class="tag ' + (refreshed ? 'blue' : 'red') + '">' + (refreshed ? 'Обновлено · макет' : 'Конфликт версии') + '</span>' +
+          '<h3 id="states-status" tabindex="-1" data-focus-key="states-status">' + (refreshed ? 'Карточка обновлена' : 'Действие не применено') + '</h3>' +
+          '<p>' + (refreshed
+            ? 'Подтверждение не отправлялось. Показана актуальная карточка из макета; реальных запросов нет.'
+            : 'Версия 2 не совпала с версией 4. Повторный переход запрещён; ниже — актуальное состояние.') + '</p>' +
+          staleTicket(true) +
+          '<div class="panel-actions">' +
+            button('К списку', 'nav', 'list', { className: 'kb-primary', focusKey: 'states-open-list' }) +
+            button('Сбросить', 'states-reset', '', { focusKey: 'states-reset' }) +
+          '</div>' +
+        '</div>';
+      }
+    }
+
+    return surfaceMessage(
+      '<div class="panel-head">' +
+        '<div><span class="eyebrow">Состояния · демо</span><h3>Состояния экрана</h3></div>' +
+        roleChip() +
+      '</div>' +
+      '<p class="state-switch-label" id="states-switch-label">Выберите состояние</p>' +
+      '<div class="state-tabs" role="group" aria-labelledby="states-switch-label">' + tabs + '</div>' +
+      noticeBlock(state.states.notice) +
+      content +
+      '<p class="chat-caption">Пусто, ошибка и stale различаются причиной и восстановлением. Роль не превращает ошибку в разрешение.</p>'
+    );
+  }
+
+  function renderRich() {
+    return '<article class="msg in">' +
+      '<div class="msg-meta">Канал · демонстрационный пост</div>' +
+      '<div class="channel-post">' +
+        '<div class="post-head">' +
+          '<span class="channel-avatar" aria-hidden="true">К</span>' +
+          '<div><strong>Канал проекта</strong><span>публичный пост · макет</span></div>' +
+          '<span class="tag">предпросмотр</span>' +
+        '</div>' +
+        '<div class="post-copy">' +
+          '<h3>Обновление тарифов</h3>' +
+          '<p>С 1 ноября действуют новые условия. Ниже — сравнение без скрытых строк. Учебные значения, не оферта.</p>' +
+          '<div class="rich-table-wrap">' +
+            '<table class="rich-table">' +
+              '<caption>Тарифы · иллюстративно</caption>' +
+              '<thead><tr><th scope="col" style="width:32%">План</th><th scope="col" style="width:26%">Цена</th><th scope="col">Что входит</th></tr></thead>' +
+              '<tbody>' +
+                '<tr><td>Базовый</td><td>500 ₽</td><td>Меню и заявки</td></tr>' +
+                '<tr><td>Команда</td><td>1 500 ₽</td><td>Роли и очередь</td></tr>' +
+              '</tbody>' +
+            '</table>' +
+          '</div>' +
+          '<details class="post-details" id="rich-details"' + (state.rich.detailsOpen ? ' open' : '') + '>' +
+            '<summary>Как считается стоимость</summary>' +
+            '<div class="details-body"><p>Стоимость фиксируется на сервере до отправки инвойса. В rich-посте показан учебный пример; детали не являются публичной офертой.</p></div>' +
+          '</details>' +
+          '<p class="post-footnote">1. Цены и условия иллюстративные. 2. Публикация требует отдельного права в конкретном канале.</p>' +
+          '<div class="rich-actions">' +
+            '<button type="button" class="rich-btn primary" data-action="rich-cta" data-value="plan:choose" data-focus-key="rich-plan">Выбрать тариф</button>' +
+            '<button type="button" class="rich-btn" data-action="rich-cta" data-value="post:question" data-focus-key="rich-question">Задать вопрос</button>' +
+          '</div>' +
+          '<p class="callback-note" id="rich-note" role="status" tabindex="-1" data-focus-key="rich-note">' + esc(state.rich.notice || 'callback-кнопки в макете не отправляют запрос.') + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<p class="chat-caption">' + esc(ROLE_INFO[state.role].label) + ' · публичный пост одинаков для зрителей; это HTML-предпросмотр, не рендер клиента. Право подготовки и публикации проверяется отдельно.</p>' +
+    '</article>';
+  }
+
+  function traceItem(label, value, code) {
+    return { label: label, value: value, code: Boolean(code) };
+  }
+
+  function buildTrace() {
+    var role = state.role;
+    var scene = state.scene;
+
+    if (scene === 'menu') {
+      if (role === 'client') {
+        return [
+          traceItem('Текст', '«Мои заявки» — доступный личный раздел'),
+          traceItem('Действие', 'nav:list', true),
+          traceItem('Проверка', 'actor из update; scope «только свои объекты»'),
+          traceItem('Переход', 'личный список; управление не отрисовано')
+        ];
+      }
+      return [
+        traceItem('Текст', role === 'operator' ? '«Рабочая очередь»' : '«Управление» / «Рабочая очередь»'),
+        traceItem('Действие', role === 'operator' ? 'nav:queue' : 'nav:admin → nav:queue', true),
+        traceItem('Проверка', 'серверная роль, scope и актуальность доступа'),
+        traceItem('Переход', 'очередь/доступ или отказ без данных')
+      ];
+    }
+
+    if (scene === 'form') {
+      if (state.form.step === 1) {
+        return [
+          traceItem('Текст', 'Выбор темы «Доступ к аккаунту»'),
+          traceItem('Действие', 'form:topic:access', true),
+          traceItem('Проверка', 'формат callback и контекст диалога; без прав из callback'),
+          traceItem('Переход', 'шаг 2 из 3; тема в черновике')
+        ];
+      }
+      if (state.form.step === 2) {
+        return [
+          traceItem('Текст', 'Текст в поле ввода (обычное сообщение)'),
+          traceItem('Действие', 'message update, не callback_data', true),
+          traceItem('Проверка', 'серверная валидация длины и типа; ввод не HTML'),
+          traceItem('Переход', 'шаг 3 из 3; экранированный preview')
+        ];
+      }
+      if (state.form.step === 3) {
+        return [
+          traceItem('Текст', '«Подтвердить заявку»'),
+          traceItem('Действие', 'form:submit:5127:v3', true),
+          traceItem('Проверка', 'ожидаемая версия, статус и одна транзакция'),
+          traceItem('Переход', 'результат; повтор показывает актуальный итог')
+        ];
+      }
+      return [
+        traceItem('Текст', '«Мои заявки» после результата'),
+        traceItem('Действие', 'nav:list', true),
+        traceItem('Проверка', 'scope пользователя и границы списка'),
+        traceItem('Переход', 'стабильный личный список')
+      ];
+    }
+
+    if (scene === 'list') {
+      if (state.list.openId !== null) {
+        return [
+          traceItem('Текст', '«К списку»'),
+          traceItem('Действие', 'list:back:' + state.list.page + ':' + state.list.filter, true),
+          traceItem('Проверка', 'страница, фильтр и доступ к объекту'),
+          traceItem('Переход', 'та же страница с актуальными данными')
+        ];
+      }
+      return [
+        traceItem('Текст', state.list.filter === 'all' ? 'Открыть заявку № 1042' : 'Фильтр «' + FILTER_LABELS[state.list.filter] + '»'),
+        traceItem('Действие', state.list.filter === 'all' ? 'req:open:1042' : 'req:list:' + state.list.filter + ':p' + state.list.page, true),
+        traceItem('Проверка', 'границы доступа + стабильная сортировка created_at, id'),
+        traceItem('Переход', 'страница/карточка; старый индекс не считается актуальным')
+      ];
+    }
+
+    if (scene === 'settings') {
+      var scope = state.settings.scope;
+      if (scope === 'workspace' && !canWorkspace(role)) { scope = 'personal'; }
+      var dirty = scope === 'personal'
+        ? !sameObject(state.settings.personal, state.settings.savedPersonal)
+        : !sameObject(state.settings.workspace, state.settings.savedWorkspace);
+      var version = scope === 'personal' ? state.settings.versionPersonal : state.settings.versionWorkspace;
+      if (dirty) {
+        return [
+          traceItem('Текст', '«Сохранить» · ' + (scope === 'personal' ? 'личные' : 'рабочие')),
+          traceItem('Действие', 'set:save:' + (scope === 'personal' ? 'me' : 'team') + ':v' + version, true),
+          traceItem('Проверка', 'допустимые значения, scope и ожидаемая версия'),
+          traceItem('Переход', 'сохранено v' + (version + 1) + '; старый экран не применяет')
+        ];
+      }
+      return [
+        traceItem('Текст', 'Переключить уведомление или сводку'),
+        traceItem('Действие', 'set:notify:0:v' + version, true),
+        traceItem('Проверка', 'валидация значения и права на область'),
+        traceItem('Переход', 'только черновик; сохранение отдельным действием')
+      ];
+    }
+
+    if (scene === 'queue') {
+      if (role === 'client') {
+        return [
+          traceItem('Текст', 'Пункт «Очередь» / прямой переход'),
+          traceItem('Действие', 'nav:queue', true),
+          traceItem('Проверка', 'роль и scope; скрытие экрана не является проверкой'),
+          traceItem('Переход', 'стабильный экран ограничения без данных')
+        ];
+      }
+      if (state.queue.status === 'new') {
+        return [
+          traceItem('Текст', '«Взять в работу»'),
+          traceItem('Действие', 'q:take:1042:v2', true),
+          traceItem('Проверка', 'atomic claim, текущий assignee и версия'),
+          traceItem('Переход', 'new → working(you); audit в той же транзакции')
+        ];
+      }
+      if (state.queue.status === 'working') {
+        if (!isManager(role) && state.queue.assignee === 'operator-2') {
+          return [
+            traceItem('Текст', '«Закрыть обращение» у чужой карточки'),
+            traceItem('Действие', 'кнопка недоступна; сервер отклонил бы q:close', true),
+            traceItem('Проверка', 'assignee и scope; оператор не управляет чужим назначением'),
+            traceItem('Переход', 'состояние не меняется; показана причина')
+          ];
+        }
+        return [
+          traceItem('Текст', '«Закрыть обращение»'),
+          traceItem('Действие', 'q:close:1042:v3', true),
+          traceItem('Проверка', 'assignee, версия и право на переход'),
+          traceItem('Переход', 'working → closed; уведомление через outbox')
+        ];
+      }
+      return [
+        traceItem('Текст', '«Переоткрыть»'),
+        traceItem('Действие', 'q:reopen:1042:v4', true),
+        traceItem('Проверка', 'право на обращение и текущая версия'),
+        traceItem('Переход', 'closed → working; новый assignee аудируется')
+      ];
+    }
+
+    if (scene === 'access') {
+      if (role === 'client') {
+        return [
+          traceItem('Текст', 'Запрос экрана ролей'),
+          traceItem('Действие', 'nav:access', true),
+          traceItem('Проверка', 'роль и scope; чужой список не отдаётся'),
+          traceItem('Переход', 'экран ограничения без данных')
+        ];
+      }
+      if (role === 'operator') {
+        return [
+          traceItem('Текст', 'Просмотр ролей без изменения'),
+          traceItem('Действие', 'role select disabled; запрос не уходит', true),
+          traceItem('Проверка', 'роль оператора не даёт права mutation'),
+          traceItem('Переход', 'только просмотр; причина ограничения видима')
+        ];
+      }
+      if (state.role === 'admin' && state.access.records[state.access.target].role === 'admin') {
+        return [
+          traceItem('Текст', '«Изменить роль администратора»'),
+          traceItem('Действие', 'option disabled; сервер отклонил бы', true),
+          traceItem('Проверка', 'политика: администратора меняет только владелец'),
+          traceItem('Переход', 'без изменения; понятная причина')
+        ];
+      }
+      if (state.access.stage === 'confirm') {
+        return [
+          traceItem('Текст', '«Подтвердить изменение»'),
+          traceItem('Действие', 'role:ok:' + state.access.target + ':' + (state.access.proposal || 'role') + ':v1', true),
+          traceItem('Проверка', 'actor, target, scope, версия и одноразовость'),
+          traceItem('Переход', 'роль + аудит в одной транзакции')
+        ];
+      }
+      return [
+        traceItem('Текст', '«Проверить изменение»'),
+        traceItem('Действие', 'role:check:' + state.access.target + ':' + (state.access.proposal || 'role'), true),
+        traceItem('Проверка', 'право viewer, scope, target и ожидаемая версия'),
+        traceItem('Переход', 'сначала подтверждение; commit отдельно')
+      ];
+    }
+
+    if (scene === 'danger') {
+      if (state.danger.stage === 'confirm') {
+        return [
+          traceItem('Текст', '«Удалить безвозвратно»'),
+          traceItem('Действие', 'del:ok:4821:v3:t7', true),
+          traceItem('Проверка', 'actor, ownership, ожидаемая версия и одноразовый срок'),
+          traceItem('Переход', 'tombstone + audit; повтор не удаляет второй раз')
+        ];
+      }
+      if (state.danger.stage === 'deleted') {
+        return [
+          traceItem('Текст', '«Восстановить демо»'),
+          traceItem('Действие', 'локальный сброс сценария', true),
+          traceItem('Проверка', 'это не серверная операция и не восстановление данных'),
+          traceItem('Переход', 'макет возвращён в исходное состояние')
+        ];
+      }
+      return [
+        traceItem('Текст', '«Удалить черновик»'),
+        traceItem('Действие', 'del:ask:4821:v3', true),
+        traceItem('Проверка', 'ownership объекта; роль не подменяет владение'),
+        traceItem('Переход', 'подтверждение без изменения данных')
+      ];
+    }
+
+    if (scene === 'states') {
+      if (state.states.variant === 'empty') {
+        return [
+          traceItem('Текст', '«Создать заявку» в пустом списке'),
+          traceItem('Действие', 'nav:form', true),
+          traceItem('Проверка', 'пустота — не ошибка и не отказ в правах'),
+          traceItem('Переход', 'форма, шаг 1; понятный следующий шаг')
+        ];
+      }
+      if (state.states.variant === 'error') {
+        if (state.states.recovered) {
+          return [
+            traceItem('Текст', 'Повторная попытка после ошибки'),
+            traceItem('Действие', 'повтор запроса (вне макета)', true),
+            traceItem('Проверка', 'категория ошибки и границы доступа'),
+            traceItem('Переход', 'в макете показано восстановление; сеть не проверялась')
+          ];
+        }
+        return [
+          traceItem('Текст', '«Повторить» на ошибке загрузки'),
+          traceItem('Действие', 'retry (вне макета)', true),
+          traceItem('Проверка', 'network/5xx отличается от permission'),
+          traceItem('Переход', 'загрузка/ошибка; без подмены на пустой успех')
+        ];
+      }
+      if (state.states.stale === 'idle') {
+        return [
+          traceItem('Текст', '«Подтвердить» в карточке версии 2'),
+          traceItem('Действие', 'req:ok:1042:v2', true),
+          traceItem('Проверка', 'текущая версия 4 ≠ ожидаемая 2'),
+          traceItem('Переход', 'конфликт + актуальная карточка; без перехода')
+        ];
+      }
+      return [
+        traceItem('Текст', state.states.stale === 'refreshed' ? '«Обновить карточку»' : 'Обработка stale-конфликта'),
+        traceItem('Действие', 'чтение актуального состояния', true),
+        traceItem('Проверка', 'статус и версия из БД, не из callback'),
+        traceItem('Переход', 'показана версия 4; повторное действие не выполнено')
+      ];
+    }
+
+    return [
+      traceItem('Текст', 'CTA «Выбрать тариф» в rich-посте'),
+      traceItem('Действие', 'plan:choose', true),
+      traceItem('Проверка', 'answerCallbackQuery + actor/право/таргет'),
+      traceItem('Переход', 'ответ пользователю; публикация — отдельное право')
+    ];
+  }
+
+  function renderRail() {
+    var view = ROLE_VIEWS[state.scene][state.role];
+    var trace = buildTrace();
+    var traceMarkup = trace.map(function (item, index) {
+      return '<li><span class="trace-num">' + (index + 1) + '</span><div>' +
+        '<span class="trace-label">' + esc(item.label) + '</span>' +
+        (item.code ? '<code>' + esc(item.value) + '</code>' : '<p>' + esc(item.value) + '</p>') +
+      '</div></li>';
+    }).join('');
+
+    return '<div class="rail-block">' +
+        '<div class="rail-kicker">Назначение</div>' +
+        '<p class="rail-purpose">' + esc(SCENES[state.scene].purpose) + '</p>' +
+      '</div>' +
+      '<div class="rail-block">' +
+        '<div class="rail-kicker">Роль и границы</div>' +
+        '<div class="role-card" data-verdict="' + esc(view.state) + '">' +
+          '<div class="role-card-top"><span class="role-name">' + esc(ROLE_INFO[state.role].label) + '</span><span class="verdict verdict-' + esc(view.state) + '">' + esc(view.badge) + '</span></div>' +
+          '<p class="role-head">' + esc(view.head) + '</p>' +
+          '<p>' + esc(view.body) + '</p>' +
+          '<p class="scope-line">Область: ' + esc(view.scope) + ' · иллюстративно</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="rail-block">' +
+        '<div class="rail-kicker">Трасса действия</div>' +
+        '<ol class="trace">' + traceMarkup + '</ol>' +
+      '</div>' +
+      '<div class="rail-block">' +
+        '<div class="rail-kicker">Правило</div>' +
+        '<p class="rail-rule">' + esc(SCENES[state.scene].rule) + '</p>' +
+      '</div>' +
+      '<details class="rail-payload">' +
+        '<summary>Payload-контракт <span>иллюстрация</span></summary>' +
+        '<pre><code>' + esc(payloadFor(state.scene)) + '</code></pre>' +
+        '<p class="payload-note">' + esc(SCENES[state.scene].payloadNote) + '</p>' +
+      '</details>' +
+      '<p class="rail-source">Снимок Bot API 10.3 · 26.10.2026. Сверяй контракт метода и установленный SDK перед реализацией.</p>';
+  }
+
+  function updateChrome() {
+    var themeButton = $('#theme-toggle');
+    if (themeButton) {
+      themeButton.textContent = state.theme === 'dark' ? 'Тема · тёмная' : 'Тема · светлая';
+      themeButton.setAttribute('aria-pressed', state.theme === 'dark' ? 'true' : 'false');
+    }
+    $$('[data-action="width"]').forEach(function (buttonNode) {
+      buttonNode.setAttribute('aria-pressed', buttonNode.getAttribute('data-value') === state.width ? 'true' : 'false');
+    });
+  }
+
+  function render() {
+    var scene = SCENES[state.scene];
+    var stream = $('#chat-stream');
+    var rail = $('#rail-content');
+    if (!scene || !stream || !rail) { return; }
+
+    document.documentElement.setAttribute('data-theme', state.theme);
+    document.body.setAttribute('data-scene', state.scene);
+    document.body.setAttribute('data-role', state.role);
+    $('#specimen').setAttribute('data-width', state.width);
+
+    $('#scene-group').textContent = scene.group;
+    $('#scene-title').textContent = scene.title;
+    $('#scene-subtitle').textContent = scene.subtitle;
+    $('#scene-count').textContent = scene.n + ' / 09';
+    $('#chat-title').textContent = scene.chatTitle;
+    $('#chat-kind').textContent = scene.chatKind;
+    $('#chat-avatar').textContent = scene.avatar;
+    $('#rail-index').textContent = scene.n;
+    $('#role-note').innerHTML = '<strong>' + esc(ROLE_INFO[state.role].label) + '</strong> · ' + esc(ROLE_INFO[state.role].scope) + ' · это иллюстрация, не проверка доступа';
+
+    $$('input[name="role"]').forEach(function (input) {
+      input.checked = input.value === state.role;
+    });
+    $$('.nav-list a').forEach(function (link) {
+      if (link.getAttribute('data-nav') === state.scene) {
+        link.setAttribute('aria-current', 'page');
+      } else {
+        link.removeAttribute('aria-current');
+      }
+    });
+
+    stream.setAttribute('data-scene', state.scene);
+    stream.setAttribute('data-role', state.role);
+    stream.setAttribute('aria-label', 'Интерактивный макет: ' + scene.title + '. Иллюстративная роль: ' + ROLE_INFO[state.role].label + '.');
+    stream.innerHTML = state.scene === 'menu' ? renderMenu()
+      : state.scene === 'form' ? renderForm()
+      : state.scene === 'list' ? renderList()
+      : state.scene === 'settings' ? renderSettings()
+      : state.scene === 'queue' ? renderQueue()
+      : state.scene === 'access' ? renderAccess()
+      : state.scene === 'danger' ? renderDanger()
+      : state.scene === 'states' ? renderStates()
+      : renderRich();
+
+    rail.innerHTML = renderRail();
+    $('#live-status').textContent = state.status;
+    updateChrome();
+  }
+
+  function clearTransientState() {
+    if (state.access.stage === 'confirm') {
+      state.access.stage = 'idle';
+      state.access.notice = 'Подтверждение сброшено при уходе с экрана.';
+    }
+    if (state.danger.stage === 'confirm') {
+      state.danger.stage = 'idle';
+      state.danger.notice = 'Подтверждение сброшено при уходе с экрана.';
+    }
+    if (state.queue.reassignOpen) { state.queue.reassignOpen = false; }
+  }
+
+  function go(scene) {
+    if (!SCENES[scene]) { return; }
+    if (state.scene !== scene) { clearTransientState(); }
+    state.scene = scene;
+    try {
+      if (window.location.hash !== '#' + scene) {
+        window.history.pushState(null, '', '#' + scene);
+      }
+    } catch (error) {
+      window.location.hash = scene;
+    }
+    render();
+    focusStream();
+  }
+
+  function resetForm() {
+    state.form = { step: 1, topic: '', details: '', error: '', resultId: null };
+  }
+
+  function handleFormSubmit() {
+    if (state.scene !== 'form' || state.form.step !== 2) { return; }
+    var input = $('#form-input');
+    if (!input) { return; }
+    var raw = input.value;
+    var trimmed = raw.trim();
+    if (trimmed.length < 8) {
+      state.form.details = raw;
+      state.form.error = 'Нужно не меньше 8 знаков. Сейчас: ' + trimmed.length + '.';
+      setStatus('Форма: проверьте описание; шаг 2 не завершён.');
+      render();
+      focusByKey('form-input');
+      return;
+    }
+    if (trimmed.length > 160) {
+      state.form.details = raw;
+      state.form.error = 'Описание длиннее 160 знаков. Сократите текст.';
+      setStatus('Форма: превышено ограничение поля.');
+      render();
+      focusByKey('form-input');
+      return;
+    }
+    state.form.details = trimmed;
+    state.form.error = '';
+    state.form.step = 3;
+    setStatus('Форма: предпросмотр готов. Заявка ещё не создана.');
+    render();
+    focusByKey('form-confirm');
+  }
+
+  function saveSettings() {
+    var scope = state.settings.scope;
+    if (scope === 'workspace' && !canWorkspace(state.role)) { return; }
+    var dirty = scope === 'personal'
+      ? !sameObject(state.settings.personal, state.settings.savedPersonal)
+      : !sameObject(state.settings.workspace, state.settings.savedWorkspace);
+    if (!dirty) { return; }
+    if (scope === 'personal') {
+      state.settings.savedPersonal = Object.assign({}, state.settings.personal);
+      state.settings.versionPersonal += 1;
+      state.settings.notice = 'Личные настройки сохранены в макете · v' + state.settings.versionPersonal + '.';
+    } else {
+      state.settings.savedWorkspace = Object.assign({}, state.settings.workspace);
+      state.settings.versionWorkspace += 1;
+      state.settings.notice = 'Рабочие настройки сохранены в макете · v' + state.settings.versionWorkspace + '.';
+    }
+    setStatus('Настройки: сохранено в локальном состоянии макета; БД не используется.');
+    render();
+    focusByKey('settings-status');
+  }
+
+  function cancelSettings() {
+    if (state.settings.scope === 'personal') {
+      state.settings.personal = Object.assign({}, state.settings.savedPersonal);
+    } else {
+      state.settings.workspace = Object.assign({}, state.settings.savedWorkspace);
+    }
+    state.settings.notice = 'Изменения отменены. Показаны сохранённые значения макета.';
+    setStatus('Настройки: черновик сброшен до сохранённых значений.');
+    render();
+    focusByKey('settings-status');
+  }
+
+  function roleAccessRecord() {
+    return state.access.records[state.access.target];
+  }
+
+  function accessCanEdit() {
+    return state.role === 'admin' || state.role === 'owner';
+  }
+
+  function accessTargetBlocked() {
+    return state.role === 'admin' && roleAccessRecord().role === 'admin';
+  }
+
+  function accessProposal() {
+    var proposal = state.access.proposal;
+    return ['client', 'operator', 'admin'].indexOf(proposal) === -1 ? roleAccessRecord().role : proposal;
+  }
+
+  function confirmAccessChange() {
+    if (state.access.stage !== 'confirm' || !accessCanEdit() || accessTargetBlocked()) { return; }
+    var record = roleAccessRecord();
+    var nextRole = accessProposal();
+    if (nextRole === record.role) { return; }
+    var previous = record.role;
+    record.role = nextRole;
+    state.access.audit.unshift({
+      name: record.name,
+      from: ROLE_INFO[previous].label,
+      to: ROLE_INFO[nextRole].label,
+      time: 'сейчас'
+    });
+    state.access.stage = 'idle';
+    state.access.proposal = '';
+    state.access.notice = 'Роль обновлена в макете. Серверная запись и аудит не выполнялись.';
+    setStatus('Доступ: роль изменена в локальном макете.');
+    render();
+    focusByKey('access-audit');
+  }
+
+  function applyRole(role) {
+    if (!ROLE_INFO[role]) { return; }
+    state.role = role;
+    if (state.settings.scope === 'workspace' && !canWorkspace(role)) {
+      state.settings.scope = 'personal';
+      state.settings.notice = 'Рабочие настройки скрыты: эта роль не имеет к ним доступа.';
+    }
+    if (state.access.stage === 'confirm') {
+      state.access.stage = 'idle';
+      state.access.notice = 'Подтверждение сброшено при смене роли.';
+    }
+    if (state.danger.stage === 'confirm') {
+      state.danger.stage = 'idle';
+      state.danger.notice = 'Подтверждение сброшено при смене роли.';
+    }
+    if (state.queue.reassignOpen && !isManager(role)) {
+      state.queue.reassignOpen = false;
+    }
+    state.access.proposal = '';
+    setStatus('Роль просмотра: ' + ROLE_INFO[role].label + '. Это иллюстрация RBAC, не авторизация.');
+    render();
+  }
+
+  function handleClick(event) {
+    var target = event.target.closest('[data-action]');
+    if (!target || target.disabled) { return; }
+    if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') { return; }
+
+    var action = target.getAttribute('data-action');
+    var value = target.getAttribute('data-value') || '';
+
+    if (action === 'theme') {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', state.theme);
+      try { localStorage.setItem('te-gallery-theme', state.theme); } catch (error) { /* optional persistence */ }
+      updateChrome();
+      setStatus('Тема: ' + (state.theme === 'dark' ? 'тёмная' : 'светлая') + '. Макет остаётся локальным.');
+      return;
+    }
+
+    if (action === 'width') {
+      state.width = value === 'narrow' ? 'narrow' : 'normal';
+      $('#specimen').setAttribute('data-width', state.width);
+      updateChrome();
+      setStatus('Ширина макета: ' + (state.width === 'narrow' ? '360 px' : '396 px') + '.');
+      return;
+    }
+
+    if (action === 'nav') {
+      if (value === 'form' && (state.scene === 'menu' || state.scene === 'states') && state.form.step === 4) {
+        resetForm();
+      }
+      if (value === 'list') { state.list.openId = null; }
+      if (value === 'form') { state.form.error = ''; }
+      setStatus('Сценарий: ' + (SCENES[value] ? SCENES[value].title : value) + '. Локальный переход.');
+      go(value);
+      return;
+    }
+
+    if (action === 'form-topic') {
+      state.form.topic = value;
+      state.form.step = 2;
+      state.form.error = '';
+      setStatus('Форма: шаг 2 из 3. Введите описание.');
+      render();
+      focusByKey('form-input');
+      return;
+    }
+
+    if (action === 'form-back') {
+      if (state.form.step === 1) {
+        resetForm();
+        state.menu.notice = 'Вы вернулись в меню. Черновик не отправлен.';
+        setStatus('Форма: возврат в меню без создания заявки.');
+        go('menu');
+        return;
+      }
+      if (state.form.step === 2) {
+        state.form.step = 1;
+        state.form.error = '';
+        setStatus('Форма: шаг 1 из 3; ввод сохранён в черновике.');
+        render();
+        focusByKey('form-topic-' + (state.form.topic || 'access'));
+        return;
+      }
+      if (state.form.step === 3) {
+        state.form.step = 2;
+        state.form.error = '';
+        setStatus('Форма: шаг 2 из 3; описание сохранено.');
+        render();
+        focusByKey('form-input');
+        return;
+      }
+      resetForm();
+      setStatus('Форма очищена для новой заявки.');
+      render();
+      focusByKey('form-topic-access');
+      return;
+    }
+
+    if (action === 'form-cancel') {
+      resetForm();
+      state.menu.notice = 'Создание отменено. Ничего не отправлено.';
+      setStatus('Форма: отмена. Данные не отправлены.');
+      go('menu');
+      return;
+    }
+
+    if (action === 'form-confirm') {
+      if (state.form.step !== 3 || !state.form.topic || !state.form.details) { return; }
+      state.form.step = 4;
+      state.form.resultId = 5127;
+      state.form.error = '';
+      setStatus('Форма: результат макета. Реальная запись не выполнялась.');
+      render();
+      focusByKey('form-result');
+      return;
+    }
+
+    if (action === 'form-reset') {
+      resetForm();
+      setStatus('Форма: новый черновик. Шаг 1 из 3.');
+      render();
+      focusByKey('form-topic-access');
+      return;
+    }
+
+    if (action === 'list-filter') {
+      state.list.filter = value;
+      state.list.page = 1;
+      state.list.openId = null;
+      setStatus('Список: фильтр «' + FILTER_LABELS[value] + '».');
+      render();
+      focusByKey('list-filter-' + value);
+      return;
+    }
+
+    if (action === 'list-page') {
+      var pages = Math.max(1, Math.ceil(REQUESTS.filter(function (item) {
+        return state.list.filter === 'all' || item.tone === state.list.filter;
+      }).length / 3));
+      state.list.page = Math.max(1, Math.min(pages, state.list.page + (value === 'next' ? 1 : -1)));
+      setStatus('Список: страница ' + state.list.page + ' из ' + pages + '.');
+      render();
+      focusByKey('list-heading');
+      return;
+    }
+
+    if (action === 'list-open') {
+      state.list.openId = Number(value);
+      setStatus('Список: открыта карточка № ' + value + '.');
+      render();
+      focusByKey('list-detail-heading');
+      return;
+    }
+
+    if (action === 'list-back') {
+      state.list.openId = null;
+      setStatus('Список: возврат без изменения страницы и фильтра.');
+      render();
+      focusByKey('list-heading');
+      return;
+    }
+
+    if (action === 'settings-scope') {
+      if (value === 'workspace' && !canWorkspace(state.role)) { return; }
+      state.settings.scope = value;
+      state.settings.notice = '';
+      setStatus('Настройки: область «' + (value === 'personal' ? 'личные' : 'рабочие') + '».');
+      render();
+      focusByKey('settings-scope-' + value);
+      return;
+    }
+
+    if (action === 'settings-save') { saveSettings(); return; }
+    if (action === 'settings-cancel') { cancelSettings(); return; }
+
+    if (action === 'queue-filter') {
+      state.queue.filter = value;
+      state.queue.reassignOpen = false;
+      setStatus('Очередь: фильтр «' + value + '».');
+      render();
+      focusByKey('queue-filter-' + value);
+      return;
+    }
+
+    if (action === 'queue-take') {
+      if (state.role === 'client' || state.queue.status !== 'new') { return; }
+      state.queue.status = 'working';
+      state.queue.assignee = 'viewer';
+      state.queue.filter = 'mine';
+      state.queue.notice = 'Обращение взято в работу · макет. В боте назначение должно быть атомарным.';
+      setStatus('Очередь: обращение назначено вам в макете.');
+      render();
+      focusByKey('queue-heading');
+      return;
+    }
+
+    if (action === 'queue-close') {
+      if (state.queue.status !== 'working') { return; }
+      if (state.queue.assignee !== 'viewer' && !isManager(state.role)) { return; }
+      state.queue.status = 'closed';
+      state.queue.notice = 'Обращение закрыто · макет. Клиентское уведомление не отправлялось.';
+      setStatus('Очередь: обращение закрыто в макете.');
+      render();
+      focusByKey('queue-heading');
+      return;
+    }
+
+    if (action === 'queue-return') {
+      if (state.queue.assignee !== 'viewer' && !isManager(state.role)) { return; }
+      state.queue.status = 'new';
+      state.queue.assignee = null;
+      state.queue.filter = 'new';
+      state.queue.reassignOpen = false;
+      state.queue.notice = 'Обращение возвращено в очередь · макет.';
+      setStatus('Очередь: обращение возвращено в новые.');
+      render();
+      focusByKey('queue-heading');
+      return;
+    }
+
+    if (action === 'queue-reopen') {
+      if (state.queue.assignee !== 'viewer' && !isManager(state.role)) { return; }
+      state.queue.status = 'working';
+      state.queue.assignee = 'viewer';
+      state.queue.filter = 'mine';
+      state.queue.notice = 'Обращение переоткрыто и назначено вам · макет.';
+      setStatus('Очередь: обращение переоткрыто в макете.');
+      render();
+      focusByKey('queue-heading');
+      return;
+    }
+
+    if (action === 'queue-reassign-open') {
+      if (!isManager(state.role) || state.queue.status !== 'working') { return; }
+      state.queue.reassignOpen = true;
+      render();
+      focusByKey('queue-reassign-select');
+      return;
+    }
+
+    if (action === 'queue-reassign-apply') {
+      if (!isManager(state.role) || state.queue.status !== 'working') { return; }
+      state.queue.assignee = state.queue.reassignTo;
+      state.queue.status = 'working';
+      state.queue.filter = 'all';
+      state.queue.reassignOpen = false;
+      state.queue.notice = 'Назначено: ' + (state.queue.assignee === 'operator-2' ? 'Оператор 2' : 'Оператор 3') + ' · макет.';
+      setStatus('Очередь: исполнитель изменён в макете; аудит не записывался.');
+      render();
+      focusByKey('queue-heading');
+      return;
+    }
+
+    if (action === 'queue-reassign-cancel') {
+      state.queue.reassignOpen = false;
+      render();
+      focusByKey(isManager(state.role) ? 'queue-reassign-open' : 'queue-heading');
+      return;
+    }
+
+    if (action === 'access-review') {
+      if (!accessCanEdit() || accessTargetBlocked()) { return; }
+      if (accessProposal() === roleAccessRecord().role) { return; }
+      state.access.stage = 'confirm';
+      state.access.notice = '';
+      setStatus('Доступ: показано подтверждение; изменение ещё не применено.');
+      render();
+      focusByKey('access-confirm');
+      return;
+    }
+
+    if (action === 'access-confirm') { confirmAccessChange(); return; }
+
+    if (action === 'access-cancel') {
+      state.access.stage = 'idle';
+      state.access.notice = 'Изменение не применено. Роль осталась прежней.';
+      setStatus('Доступ: подтверждение отменено.');
+      render();
+      focusByKey('access-role-select');
+      return;
+    }
+
+    if (action === 'danger-start') {
+      state.danger.stage = 'confirm';
+      state.danger.notice = '';
+      setStatus('Опасное действие: показано подтверждение; данные не изменены.');
+      render();
+      focusByKey('danger-confirm');
+      return;
+    }
+
+    if (action === 'danger-confirm') {
+      state.danger.stage = 'deleted';
+      state.danger.notice = 'Удаление выполнено только в макете; реальные данные не изменялись.';
+      setStatus('Опасное действие: локальный tombstone; реальных удалений нет.');
+      render();
+      focusByKey('danger-tombstone');
+      return;
+    }
+
+    if (action === 'danger-cancel') {
+      state.danger.stage = 'idle';
+      state.danger.notice = 'Удаление отменено. Черновик не изменён.';
+      setStatus('Опасное действие отменено; данных не затронуто.');
+      render();
+      focusByKey('danger-start');
+      return;
+    }
+
+    if (action === 'danger-reset') {
+      state.danger.stage = 'idle';
+      state.danger.notice = 'Сценарий восстановлен локально.';
+      setStatus('Сценарий опасного действия сброшен в макете.');
+      render();
+      focusByKey('danger-start');
+      return;
+    }
+
+    if (action === 'states-variant') {
+      state.states.variant = value;
+      state.states.recovered = false;
+      state.states.stale = 'idle';
+      state.states.notice = '';
+      setStatus('Состояния: выбран вариант «' + value + '».');
+      render();
+      focusByKey('states-tab-' + value);
+      return;
+    }
+
+    if (action === 'states-retry') {
+      if (state.states.variant !== 'error') { return; }
+      state.states.recovered = true;
+      state.states.notice = 'Повторная попытка — локальная демонстрация; сетевой запрос не выполнялся.';
+      setStatus('Состояния: восстановление в макете; сеть не проверялась.');
+      render();
+      focusByKey('states-status');
+      return;
+    }
+
+    if (action === 'states-confirm') {
+      if (state.states.variant !== 'stale' || state.states.stale !== 'idle') { return; }
+      state.states.stale = 'conflict';
+      state.states.notice = 'Конфликт версии: действие не применено, показана актуальная карточка.';
+      setStatus('Stale: конфликт версии; переход не выполнен.');
+      render();
+      focusByKey('states-status');
+      return;
+    }
+
+    if (action === 'states-refresh') {
+      if (state.states.variant !== 'stale' || state.states.stale !== 'idle') { return; }
+      state.states.stale = 'refreshed';
+      state.states.notice = 'Карточка обновлена; подтверждение не отправлялось.';
+      setStatus('Stale: карточка обновлена без операции.');
+      render();
+      focusByKey('states-status');
+      return;
+    }
+
+    if (action === 'states-reset') {
+      state.states.recovered = false;
+      state.states.stale = 'idle';
+      state.states.notice = 'Состояние сброшено.';
+      setStatus('Состояния: сценарий сброшен.');
+      render();
+      focusByKey('states-tab-' + state.states.variant);
+      return;
+    }
+
+    if (action === 'rich-cta') {
+      var bytes = typeof TextEncoder === 'function' ? new TextEncoder().encode(value).length : value.length;
+      state.rich.notice = 'callback_data: ' + value + ' · ' + bytes + ' байт · макет, запрос не отправляется.';
+      var note = $('#rich-note');
+      if (note) {
+        note.textContent = state.rich.notice;
+        note.focus();
+      }
+      setStatus('Rich-пост: callback ' + value + ' показан локально; отправки нет.');
+      return;
+    }
+  }
+
+  function handleChange(event) {
+    var target = event.target.closest('input, select');
+    if (!target) { return; }
+    var action = target.getAttribute('data-action');
+    if (!action) { return; }
+
+    if (action === 'role') {
+      applyRole(target.value);
+      return;
+    }
+
+    if (action === 'settings-toggle') {
+      var scope = target.getAttribute('data-scope');
+      var key = target.getAttribute('data-key');
+      if (!state.settings[scope]) { return; }
+      state.settings[scope][key] = Boolean(target.checked);
+      if (key === 'notify' && !target.checked) { state.settings.personal.digest = false; }
+      state.settings.notice = '';
+      setStatus('Настройки: ' + (scope === 'personal' ? 'личная' : 'рабочая') + ' настройка изменена; сохраните отдельно.');
+      render();
+      focusByKey('settings-toggle-' + key);
+      return;
+    }
+
+    if (action === 'settings-select') {
+      var selectScope = target.getAttribute('data-scope');
+      var selectKey = target.getAttribute('data-key');
+      if (!state.settings[selectScope]) { return; }
+      state.settings[selectScope][selectKey] = target.value;
+      state.settings.notice = '';
+      setStatus('Настройки: значение изменено; сохранение отдельным действием.');
+      render();
+      focusByKey('settings-select-' + selectKey);
+      return;
+    }
+
+    if (action === 'queue-reassign-target') {
+      state.queue.reassignTo = target.value;
+      return;
+    }
+
+    if (action === 'access-target') {
+      state.access.target = target.value;
+      state.access.proposal = '';
+      state.access.stage = 'idle';
+      state.access.notice = '';
+      setStatus('Доступ: выбран учебный пользователь.');
+      render();
+      focusByKey('access-target-select');
+      return;
+    }
+
+    if (action === 'access-role') {
+      state.access.proposal = target.value;
+      state.access.stage = 'idle';
+      state.access.notice = '';
+      setStatus('Доступ: выбранная роль ещё не применена.');
+      render();
+      focusByKey('access-role-select');
+    }
+  }
+
+  function handleEscape(event) {
+    if (event.key !== 'Escape') { return; }
+    if (state.scene === 'danger' && state.danger.stage === 'confirm') {
+      state.danger.stage = 'idle';
+      state.danger.notice = 'Удаление отменено клавишей Escape.';
+      setStatus('Опасное действие отменено; данных не затронуто.');
+      render();
+      focusByKey('danger-start');
+      event.preventDefault();
+      return;
+    }
+    if (state.scene === 'access' && state.access.stage === 'confirm') {
+      state.access.stage = 'idle';
+      state.access.notice = 'Изменение не применено.';
+      setStatus('Доступ: подтверждение отменено.');
+      render();
+      focusByKey('access-role-select');
+      event.preventDefault();
+      return;
+    }
+    if (state.scene === 'queue' && state.queue.reassignOpen) {
+      state.queue.reassignOpen = false;
+      render();
+      focusByKey(isManager(state.role) ? 'queue-reassign-open' : 'queue-heading');
+      event.preventDefault();
+    }
+  }
+
+  document.addEventListener('click', handleClick);
+  document.addEventListener('change', handleChange);
+  document.addEventListener('keydown', handleEscape);
+  document.addEventListener('submit', function (event) {
+    if (event.target && event.target.id === 'form-composer') {
+      event.preventDefault();
+      handleFormSubmit();
+    }
+  });
+  document.addEventListener('input', function (event) {
+    if (event.target && event.target.id === 'form-input') {
+      var counter = $('#form-counter');
+      if (counter) { counter.textContent = event.target.value.length + ' / 160'; }
+    }
+  });
+  document.addEventListener('toggle', function (event) {
+    if (event.target && event.target.id === 'rich-details') {
+      state.rich.detailsOpen = Boolean(event.target.open);
+    }
+  }, true);
+
+  window.addEventListener('hashchange', function () {
+    var scene = sceneFromHash();
+    if (!SCENES[scene]) { return; }
+    if (state.scene !== scene) { clearTransientState(); }
+    state.scene = scene;
+    setStatus('Сценарий: ' + SCENES[scene].title + '. Локальный макет.');
+    render();
+  });
+
+  window.addEventListener('popstate', function () {
+    var scene = sceneFromHash();
+    if (!SCENES[scene] || scene === state.scene) { return; }
+    clearTransientState();
+    state.scene = scene;
+    setStatus('Сценарий: ' + SCENES[scene].title + '. Локальный макет.');
+    render();
+  });
+
+  var initialScene = sceneFromHash();
+  if (SCENES[initialScene]) { state.scene = initialScene; }
+  render();
+})();
+</script>
+</body>
+</html>

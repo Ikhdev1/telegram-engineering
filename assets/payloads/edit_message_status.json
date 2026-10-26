@@ -1,0 +1,19 @@
+{
+  "method": "editMessageText",
+  "payload": {
+    "chat_id": -1001234567890,
+    "message_id": 24681012,
+    "text": "<b>Заявка №42</b>\nСтатус: подтверждена\n\nСлот: сегодня, 18:30.",
+    "parse_mode": "HTML",
+    "reply_markup": {
+      "inline_keyboard": [
+        [
+          {
+            "text": "Открыть заявку",
+            "callback_data": "req:view:42"
+          }
+        ]
+      ]
+    }
+  }
+}

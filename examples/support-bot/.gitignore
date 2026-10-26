@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+support_bot.sqlite3
+support_bot.sqlite3-shm
+support_bot.sqlite3-wal
+*.egg-info/
+.pytest_cache/

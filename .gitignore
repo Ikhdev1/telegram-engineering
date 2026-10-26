@@ -1,0 +1,41 @@
+# Local state and credentials
+PROJECT_STATE.md
+.env
+.env.*
+!.env.example
+*.session
+*.session-journal
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Runtime data
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.sqlite3
+*.sqlite3-*
+*.log
+**/data/
+
+# Python and build products
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Editor and host files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

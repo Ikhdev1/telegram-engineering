@@ -1,0 +1,47 @@
+name: Verify Telegram engineering skill
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.12', '3.13']
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install pinned dependencies
+        run: python -m pip install -r requirements-dev.txt -r examples/support-bot/requirements.txt
+      - name: Check package structure and document examples
+        run: python scripts/check_skill.py --json
+      - name: Check payload and release behavior
+        run: python -m unittest discover -s tests -v
+      - name: Check example behavior
+        working-directory: examples/support-bot
+        run: python -m unittest discover -s tests -v
+      - name: Exercise actual offline bot handlers
+        working-directory: examples/support-bot
+        run: python -m support_bot --offline-smoke
+      - name: Build portable distributions
+        run: |
+          python scripts/package_skill.py --kind skill --output dist
+          python scripts/package_skill.py --kind source --output dist
+      - name: Verify archives and extracted skill
+        run: python scripts/verify_archives.py dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: telegram-engineering-${{ matrix.os }}-py${{ matrix.python }}
+          path: dist/*

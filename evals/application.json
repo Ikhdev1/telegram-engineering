@@ -1,0 +1,23 @@
+{
+  "skill_name": "telegram-engineering",
+  "purpose": "Application checks complement guidance-only scenarios. Run in isolated output directories with no real Telegram secrets.",
+  "cases": [
+    {
+      "id": "booking-build",
+      "task": "Create booking.py exposing Store(path), book(update_id,user_id,slot_id), mine(user_id), cancel(update_id,user_id,booking_id). SQLite stdlib. Positive numeric users, one active booking per slot, own-only cancellation, replay survives restart, atomic receipt+mutation, reused update from another actor cannot leak a result. Provide a working CLI and exact README commands.",
+      "verification": "python evals/check_booking.py PATH_TO_GENERATED_BOOKING_PY",
+      "checks": ["replay", "restart", "ownership", "capacity", "cross-actor receipt reuse", "cancel/rebook", "concurrent writers", "invalid identity"]
+    },
+    {
+      "id": "payload-repair",
+      "task": "Repair ordinary sendMessage HTML containing headings/table; escape user name <Иван & Ко>; fix button with URL plus callback_data of 40 Cyrillic letters я; design non-admin private group menu and private editing rather than editMessageText on original public message. Use bundled validator where available and state its limitations.",
+      "checks": ["sendRichMessage shape", "HTML escaping", "80-byte callback rejected", "one button action", "nested ephemeral parameters", "ACK", "public vs private edit", "real local validator command"]
+    },
+    {
+      "id": "reference-bot",
+      "verification": "From examples/support-bot: python -m support_bot --offline-smoke",
+      "checks": ["actual aiogram Dispatcher", "real temporary SQLite", "client create/list/cancel", "role grants/revocation", "assignment", "stale callbacks", "delivery replay", "restart", "concurrency"]
+    }
+  ],
+  "limits": ["A no-network session exercises handlers but not Telegram acceptance or client rendering.", "One sample per task is smoke evidence, not a statistically established benchmark.", "Keep failing outputs and grades unchanged after fixes; write new iterations."]
+}

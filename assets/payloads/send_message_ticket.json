@@ -1,0 +1,31 @@
+{
+  "method": "sendMessage",
+  "payload": {
+    "chat_id": -1001234567890,
+    "text": "<b>Заявка №42</b>\nСтатус: ожидает подтверждения\nКлиент: Анна &amp; Иван\n\nВыберите действие.",
+    "parse_mode": "HTML",
+    "link_preview_options": {
+      "is_disabled": true
+    },
+    "reply_markup": {
+      "inline_keyboard": [
+        [
+          {
+            "text": "Подтвердить",
+            "callback_data": "req:ok:42:v3"
+          }
+        ],
+        [
+          {
+            "text": "Отклонить",
+            "callback_data": "req:no:42:v3"
+          },
+          {
+            "text": "Назад",
+            "callback_data": "nav:requests"
+          }
+        ]
+      ]
+    }
+  }
+}

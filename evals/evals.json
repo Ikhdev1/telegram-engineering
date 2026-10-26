@@ -1,0 +1,47 @@
+{
+  "skill_name": "telegram-engineering",
+  "evals": [
+    {
+      "id": 1,
+      "name": "rich-formatting",
+      "prompt": "Подготовь технический ответ для Telegram-бота: нужно отправить 12000 символов с заголовками, настоящей таблицей тарифов и сворачиваемыми деталями, как в https://telegram.org/blog/communities-editor-invisible-messages/ru. Дай конкретный пример HTTP JSON для небольшого сообщения с таблицей, объясни расширение до 12000 символов, отличия от обычного HTML parse_mode и проверку SDK. В группе нужно ещё показывать персональное меню только нажавшему пользователю, бот не администратор. Дай точный payload ответа на callback и ограничения доставки. Не отправляй реальные сообщения; результат — техническая записка с payload-примерами.",
+      "expected_output": "Точный sendRichMessage/InputRichMessage и rich HTML или blocks; отдельный sendMessage 4096; ephemeral_message_parameters, 15 секунд и негарантированная доставка; никаких вымышленных параметров.",
+      "files": [],
+      "expectations": [
+        "Uses sendRichMessage with exactly one rich_message.html/markdown/blocks for the real table and headings; gives a concrete valid payload rather than ordinary sendMessage HTML with unsupported tags.",
+        "Explains the separate 4096 regular-message limit and 32768 rich-message limit and checks SDK support rather than claiming 12000 is impossible or always chunking.",
+        "Personal group response payload uses ephemeral_message_parameters containing receiver_user_id and callback_query_id, not replaced top-level fields.",
+        "States non-admin response must occur within 15 seconds of the eligible callback/action, delivery is not guaranteed and edits of the public message are not private.",
+        "Treats dynamic markup text safely and shows or explains escaping; calls answerCallbackQuery rather than leaving the Telegram progress indicator hanging."
+      ]
+    },
+    {
+      "id": 2,
+      "name": "admin-replay",
+      "prompt": "Спроектируй подтверждение и отмену заявки в Telegram-боте поддержки на Python: пользователь видит только свои заявки, оператор — назначенные, админ назначает операторов, владелец выдаёт админские права. Кнопки живут долго; пользователь может подменить callback_data, два оператора могут нажать одновременно, update после рестарта может прийти повторно. Хочу понятное меню и админку прямо в боте, без отдельного сайта. Дай экраны, матрицу доступа, схему хранения и транзакционный алгоритм обработки с псевдокодом. Не создавай весь проект и не подключай Telegram — нужен применимый проектный ответ.",
+      "expected_output": "Inline UX, немедленный ack, серверный RBAC+ownership+freshness, транзакция и условный переход, durable dedup без потери незавершённой работы, owner bootstrap, аудит, без секретов в callback.",
+      "files": [],
+      "expectations": [
+        "Gives a usable inline screen/menu map and acknowledgement of callbacks before slow work, with back/cancel and stale-button recovery.",
+        "Server authorizes actor from update identity, verifies role plus resource ownership/assignment and current state; callback data and hidden admin UI are not authority.",
+        "Concurrent transitions are protected by a transaction and conditional update/version or lock; business action and durable dedup completion are atomic, with a recoverable pending/crash path.",
+        "Owner alone grants admin rights and is bootstrapped from trusted configuration by numeric Telegram ID; no first-user-is-owner or username-based authority.",
+        "Includes minimal durable schema and permission/audit data; distinguishes update dedup from semantic duplicate clicks and does not promise exactly-once Telegram message delivery."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "discovery-and-surface",
+      "prompt": "Сделай мне бота для записи на услуги с меню, админкой и бэкендом. Стек не выбран. Есть канал с объявлениями, группа для клиентов и хочу красиво оформленные посты в самом Telegram. Пока ничего не запускай и не создавай файлы — задай только важные уточняющие вопросы с предложенными вариантами по умолчанию, покажи предварительную карту меню и обозначь что получится после ответов. Не проси токен в переписке.",
+      "expected_output": "Не более семи значимых вопросов без повторов, разделение Bot API/постов/группы, menu map с записью/моими записями/помощью/назад, вопросы ролей и коллизии слотов, выбранный консервативный стек с допущениями, никаких запусков или просьб о секретах.",
+      "files": [],
+      "expectations": [
+        "Asks at most seven grouped, material discovery questions with reasonable defaults; does not demand a bot token or repeat supplied channel/group requirements.",
+        "Asks about booking services/resources, timezone/schedule and double-booking/cancellation policies, rather than only technology/preferences.",
+        "Asks who manages the bot and what roles/admin surface are required, and establishes data/deployment or integration needs.",
+        "Provides a provisional navigation map with booking, own bookings, help, back/cancel and gated administration.",
+        "Distinguishes bot interactions, channel posts and group moderation/client-side Telegram formatting; selects a conservative backend default without auto-adding user-account automation or a separate website."
+      ]
+    }
+  ]
+}
